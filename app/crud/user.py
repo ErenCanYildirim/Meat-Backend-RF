@@ -4,15 +4,34 @@ from uuid import uuid4
 from app.models.user import User, Role
 from app.schemas.user import UserCreate, UserCreateWithRoles, UserUpdate
 
-
+from app.auth import get_password_hash
 
 def get_users(db: Session):
     return db.query(User).all()
 
-#Unnecessary function
 def get_user(db: Session, user_id: str):
     return db.query(User).filter(User.id == user_id).first()
 
+def get_user_by_username(db: Session, username: str):
+    return db.query(User).filter(User.username == username).first()
+
+def get_user_by_email(db: Session, email: str):
+    return db.query(User).filter(User.email == email).first()
+
+def create_user_with_hashed_password(db: Session, user: UserCreate):
+    hashed_password = get_password_hash(user.password)
+    db_user = User(
+        id=str(uuid4()),
+        email=user.email,
+        username=user.username,
+        hashed_password=hashed_password
+    )
+    db.add(db_user)
+    db.commit()
+    db.refresh(db_user)
+    return db_user
+
+#potentially irrelevant and unsafe method
 def create_user(db: Session, user: UserCreate):
     db_user = User(
         id=str(uuid4()),
