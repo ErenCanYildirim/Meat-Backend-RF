@@ -6,6 +6,9 @@ from app.routers import auth as auth_router
 
 from fastapi.middleware.cors import CORSMiddleware
 
+from starlette.middleware.trustedhost import TrustedHostMiddleware
+
+
 user.Base.metadata.create_all(bind=engine)
 
 app = FastAPI(title="Grunland API")
