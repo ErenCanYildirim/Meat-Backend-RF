@@ -7,7 +7,9 @@ from app.routers import auth as auth_router
 from fastapi.middleware.cors import CORSMiddleware
 
 from starlette.middleware.trustedhost import TrustedHostMiddleware
+from fastapi.middleware.gzip import GZipMiddleware
 
+from app.middleware.rate_limiter import InMemoryRateLimiter
 
 user.Base.metadata.create_all(bind=engine)
 
@@ -27,3 +29,17 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+app.add_middleware(InMemoryRateLimiter, login_limit=(5,60), general_limit=(20,60))
+
+#Prod code
+
+"""
+
+#app.add_middleware(GzipMiddleware, minimum_size=1000)
+
+app.add_middleware(
+    TrustedHostMiddleware,
+    allowed_hosts = []
+)
+"""
