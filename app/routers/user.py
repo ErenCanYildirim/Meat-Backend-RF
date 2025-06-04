@@ -42,4 +42,3 @@ def delete_user(user_id: str, db: Session = Depends(get_db)):
     if not deleted_result:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
     # For 204 No Content, FastAPI automatically returns nothing.
-    return
