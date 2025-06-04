@@ -23,7 +23,7 @@ def create_user_with_hashed_password(db: Session, user: UserCreate):
     db_user = User(
         id=str(uuid4()),
         email=user.email,
-        username=user.username,
+        company_name=user.company_name,
         hashed_password=hashed_password
     )
     db.add(db_user)

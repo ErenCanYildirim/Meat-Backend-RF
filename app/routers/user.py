@@ -2,10 +2,9 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from typing import List
 
-
 from app.config.database import get_db
 from app import crud
-from app.schemas.user import UserRead, UserCreateWithRoles, UserUpdate
+from app.schemas.user import UserRead, UserCreateWithRoles, UserUpdate, UserCreate
 from app.models.user import User
 
 router = APIRouter(prefix="/users", tags=["Users"])
@@ -24,8 +23,8 @@ def get_user(user_id: str, db: Session = Depends(get_db)):
     return user
 
 @router.post("/", response_model=UserRead)
-def create_user(user: UserCreateWithRoles, db: Session = Depends(get_db)):
-    return crud.user.create_user_with_roles(db, user)
+def create_user(user: UserCreate, db: Session = Depends(get_db)):
+    return crud.user.create_user_with_hashed_password(db, user)
 
 @router.patch("/{user_id}", response_model=UserRead)
 def update_user(user_id: str, user_update: UserUpdate, db: Session = Depends(get_db)):
