@@ -37,3 +37,9 @@ service layer pattern:
 DB strategy:
     - single database
     - connection pooling
+
+Notes to self:
+    - always use __init__.py in every directory you want to import from
+    - start imports from root package (app.etc)
+    - run app from root dir 
+    - use absolute imports 
