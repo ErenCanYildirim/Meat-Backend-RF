@@ -30,7 +30,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.add_middleware(InMemoryRateLimiter, login_limit=(5,60), general_limit=(20,60))
+#app.add_middleware(InMemoryRateLimiter, login_limit=(5,60), general_limit=(20,60))
 
 #Prod code
 
