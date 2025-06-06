@@ -60,22 +60,29 @@ async def get_current_user(request:Request, db:Session = Depends(get_db)):
         headers = {"WWW-Authenticate":"Bearer"}, 
     )
 
+    #print(f"All cookies: {request.cookies}")
     token = request.cookies.get(COOKIE_NAME)
+    #print(f"Token from cookie: {token}")
+
     if not token:
         raise credentials_exception
     
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        #username: str = payload.get("sub")
+        #print(f"Decoded payload: {payload}")
         company_name: Optional[str] = payload.get("sub")
         if company_name is None:
+            #print("No company name in payload.")
             raise credentials_exception
         token_data = TokenData(company_name=company_name)
     except jwt.PyJWTError:
+        #print(f"JWT error: {e}")
         raise credentials_exception
     
     #user = get_user(db, username=token_data.company_name)
     user = get_user_by_company_name(db, token_data.company_name)
+    print(f"{user}")
     if user is None:
+        #print("User not found")
         raise credentials_exception
     return user 

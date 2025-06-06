@@ -32,7 +32,7 @@ class User(Base, UUIDMixin, TimestampMixin):
 
     email = Column(String(255), unique=True, index=True, nullable=False)
     hashed_password = Column(String(255), nullable=False)
-    company_name = Column(String(100))
+    company_name = Column(String(100), unique=True, index=True, nullable=False)
     is_active = Column(Boolean, default=True, nullable=False)
 
     #relationships
@@ -40,7 +40,7 @@ class User(Base, UUIDMixin, TimestampMixin):
     #orders = relationship("Order", back_populates="user", cascade="all, delete-orphan")
 
     def __repr__(self):
-        return f"<User(email='{self.email}', active={self.is_active})>"
+        return f"<User(id={self.id}, email='{self.email}', company_name='{self.company_name}', active={self.is_active})>"    
     
     def has_role(self, role_name: str) -> bool:
         """Check if user has a specific role"""

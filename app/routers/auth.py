@@ -53,15 +53,17 @@ async def register(user_data: UserCreate, response: Response, db:Session = Depen
 
 @router.post("/login", response_model=dict)
 async def login(user_data: UserLogin, response: Response, db:Session = Depends(get_db)):
+    print(f"Login request for email: {user_data.email}")
     user = authenticate_user(db, user_data.email, user_data.password)
     if not user:
         return {"error": "Falscher Nutzername oder Passwort!"}
     
+    print(f"Authenticated user: ID={user.id}, Email={user.email}, Company={user.company_name}")
     access_token_expires = timedelta(days=ACCESS_TOKEN_EXPIRE_DAYS)
     access_token = create_access_token(
         data={"sub":user.company_name}, expires_delta=access_token_expires
     )
-
+    print(f"Creating JWT with sub: '{user.company_name}'")
     response.set_cookie(
         key=COOKIE_NAME,
         value=access_token,

@@ -41,12 +41,32 @@ app.dependency_overrides[get_db] = override_get_db
 @pytest.fixture(scope="session", autouse=True)
 def create_test_db():
     """Setup and teardown the real SQLite DB"""
+    """
     Base.metadata.drop_all(bind=engine)
     Base.metadata.create_all(bind=engine)
     yield
     Base.metadata.drop_all(bind=engine)
     if os.path.exists("test_grunland.db"):
         os.remove("test_grunland.db")
+    """
+
+    Base.metadata.drop_all(bind=engine)
+    Base.metadata.create_all(bind=engine)
+    yield
+
+    engine.dispose()
+    Base.metadata.drop_all(bind=engine)
+
+    import time
+    time.sleep(0.1)
+
+    try:
+        if os.path.exists("test_grunland.db"):
+            os.remove("test_grunland.db")
+    except PermissionError:
+        pass 
+
+
 
 
 @pytest.fixture
@@ -172,11 +192,10 @@ class TestAuthenticatedEndpoints:
             "password": user_data["password"]
         })
         assert login_response.status_code == 200
-
-        # Pass the cookie from login to /me
+        
+        # Extract cookies and pass them explicitly
         cookies = login_response.cookies
         response = client.get("/auth/me", cookies=cookies)
-
         assert response.status_code == 200
         data = response.json()
         assert data["email"] == user_data["email"]

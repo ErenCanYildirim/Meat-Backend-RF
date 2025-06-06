@@ -11,7 +11,13 @@ def get_user(db: Session, user_id: str):
     return db.query(User).filter(User.id == user_id).first()
 
 def get_user_by_company_name(db: Session, company_name: str):
-    return db.query(User).filter(User.company_name == company_name).first()
+    print(f"Searching for company_name: '{company_name}'")
+    result = db.query(User).filter(User.company_name == company_name).first()
+    if result:
+        print(f"Found user: ID={result.id}, Email={result.email}, Company={result.company_name}")
+    else:
+        print("No user found")
+    return result
 
 def get_user_by_email(db: Session, email: str):
     return db.query(User).filter(User.email == email).first()
