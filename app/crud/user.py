@@ -4,8 +4,6 @@ from uuid import uuid4
 from app.models.user import User, Role
 from app.schemas.user import UserCreate, UserCreateWithRoles, UserUpdate
 
-from app.auth import get_password_hash
-
 def get_users(db: Session):
     return db.query(User).all()
 
@@ -19,6 +17,7 @@ def get_user_by_email(db: Session, email: str):
     return db.query(User).filter(User.email == email).first()
 
 def create_user_with_hashed_password(db: Session, user: UserCreate):
+    from app.auth import get_password_hash
     hashed_password = get_password_hash(user.password)
     db_user = User(
         id=str(uuid4()),

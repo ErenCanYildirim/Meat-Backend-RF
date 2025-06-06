@@ -15,6 +15,9 @@ from sqlalchemy.orm import Session
 from app.models import User
 from pydantic import EmailStr
 
+from app.crud.user import get_user_by_company_name
+from app.schemas.user import TokenData
+
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl = "login")
 
@@ -63,14 +66,16 @@ async def get_current_user(request:Request, db:Session = Depends(get_db)):
     
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        username: str = payload.get("sub")
-        if username is None:
+        #username: str = payload.get("sub")
+        company_name: Optional[str] = payload.get("sub")
+        if company_name is None:
             raise credentials_exception
-        token_data = TokenData(username=username)
+        token_data = TokenData(company_name=company_name)
     except jwt.PyJWTError:
         raise credentials_exception
     
-    user = get_user(db, username=token_data.username)
+    #user = get_user(db, username=token_data.company_name)
+    user = get_user_by_company_name(db, token_data.company_name)
     if user is None:
         raise credentials_exception
     return user 

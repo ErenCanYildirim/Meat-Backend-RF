@@ -61,7 +61,7 @@ async def login(user_data: UserLogin, response: Response, db:Session = Depends(g
     access_token = create_access_token(
         data={"sub":user.company_name}, expires_delta=access_token_expires
     )
-    
+
     response.set_cookie(
         key=COOKIE_NAME,
         value=access_token,

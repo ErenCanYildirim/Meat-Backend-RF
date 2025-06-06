@@ -66,5 +66,5 @@ class UserInDBBase(UserBase):
 
 #Auth
 class TokenData(BaseModel):
-    username: Optional[str] = None 
+    company_name: Optional[str] = None 
 
