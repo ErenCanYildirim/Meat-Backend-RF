@@ -17,6 +17,7 @@ from app.models.user import User
 from app.crud.user import get_user, get_user_by_email, get_user_by_company_name, create_user_with_hashed_password
 router = APIRouter(prefix="/auth", tags=["Auth"])
 
+#Test comment
 
 @router.post("/register", response_model=dict)
 async def register(user_data: UserCreate, response: Response, db:Session = Depends(get_db)):
