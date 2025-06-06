@@ -67,8 +67,6 @@ def create_test_db():
         pass 
 
 
-
-
 @pytest.fixture
 def client():
     return TestClient(app)
@@ -90,7 +88,6 @@ def user_data():
         "password": "testpass123",
         "company_name": "TestCo"
     }
-
 
 @pytest.fixture
 def created_user(db, user_data):
@@ -187,15 +184,30 @@ class TestLogout:
 
 class TestAuthenticatedEndpoints:
     def test_me_endpoint_with_auth(self, client, created_user, user_data):
+        print(f"=== TEST DEBUG ===")
+        print(f"Created user: ID={created_user.id}, Email={created_user.email}, Company={created_user.company_name}")
+        print(f"User data: {user_data}")
+        
         login_response = client.post("/auth/login", json={
             "email": user_data["email"],
             "password": user_data["password"]
         })
+        print(f"Login response status: {login_response.status_code}")
+        print(f"Login response body: {login_response.json()}")
+        
         assert login_response.status_code == 200
         
-        # Extract cookies and pass them explicitly
         cookies = login_response.cookies
+        print(f"Cookies from login: {cookies}")
+        
         response = client.get("/auth/me", cookies=cookies)
+        print(f"Me response status: {response.status_code}")
+        
+        if response.status_code != 200:
+            print(f"Me response error: {response.json()}")
+        else:
+            print(f"Me response success: {response.json()}")
+        
         assert response.status_code == 200
         data = response.json()
         assert data["email"] == user_data["email"]
@@ -226,6 +238,32 @@ class TestCookies:
         assert "HttpOnly" in cookie_header
         assert "SameSite=lax" in cookie_header
 
+    def test_me_endpoint_with_manual_cookie(self, client, created_user, user_data):
+        login_response = client.post("/auth/login", json={
+            "email": user_data["email"],
+            "password": user_data["password"]
+        })
+        assert login_response.status_code == 200
+        
+        # Debug: Check the cookies structure
+        print(f"Cookies type: {type(login_response.cookies)}")
+        print(f"Cookies content: {login_response.cookies}")
+        
+        # Extract cookie value using dict access
+        cookie_value = login_response.cookies.get("auth_token")
+        print(f"Cookie value: {cookie_value}")
+        
+        if cookie_value:
+            # Try setting the cookie manually
+            response = client.get("/auth/me", cookies={"auth_token": cookie_value})
+            print(f"Manual cookie response: {response.status_code}")
+            
+            if response.status_code != 200:
+                print(f"Manual cookie error: {response.json()}")
+            else:
+                print(f"Manual cookie success: {response.json()}")
+        else:
+            print("No auth_token cookie found!")
 
 if __name__ == "__main__":
     import pytest

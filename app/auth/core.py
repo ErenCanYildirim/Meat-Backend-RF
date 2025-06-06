@@ -60,11 +60,45 @@ async def get_current_user(request:Request, db:Session = Depends(get_db)):
         headers = {"WWW-Authenticate":"Bearer"}, 
     )
 
-    #print(f"All cookies: {request.cookies}")
     token = request.cookies.get(COOKIE_NAME)
+
+    if not token:
+        raise credentials_exception
+    
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        company_name: Optional[str] = payload.get("sub")
+        if company_name is None:
+            raise credentials_exception
+        token_data = TokenData(company_name=company_name)
+    except jwt.PyJWTError:
+        raise credentials_exception
+    
+    user = get_user_by_company_name(db, token_data.company_name)
+    print(f"{user}")
+    if user is None:
+        raise credentials_exception
+    return user 
+
+#Debug
+async def get_current_user_debug(request:Request, db:Session = Depends(get_db)):
+    print(f"===GET_CURRENT_USER DEBUG===")
+    print(f"Request cookies: {dict(request.cookies)}")
+    print(f"Looking for cookie: {COOKIE_NAME}")
+    
+    credentials_exception = HTTPException(
+        status_code = status.HTTP_401_UNAUTHORIZED,
+        detail = "Could not validate credentials!",
+        headers = {"WWW-Authenticate":"Bearer"}, 
+    )
+
+    #print(f"All cookies: {request.cookies}")
+    token = request.cookies.get(COOKIE_NAME)#
+    print(f"Token found: {token is not None}")
     #print(f"Token from cookie: {token}")
 
     if not token:
+        print("No -token - returning 401")
         raise credentials_exception
     
     try:
