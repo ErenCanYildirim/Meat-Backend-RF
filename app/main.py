@@ -1,4 +1,5 @@
 from fastapi import FastAPI
+from fastapi.responses import JSONResponse
 from app.config.database import engine, Base
 from app.models import user 
 from app.routers import user as user_router
@@ -18,6 +19,10 @@ app = FastAPI(title="Grunland API")
 @app.get("/")
 def read_root():
     return {"message": "Hello"}
+
+@app.get("/health", tags=["Health"])
+async def health_check():
+    return JSONResponse(content={"status":"ok"})
 
 app.include_router(user_router.router)
 app.include_router(auth_router.router)
