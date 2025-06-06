@@ -37,9 +37,9 @@ async def register(user_data: UserCreate, response: Response, db:Session = Depen
         key=COOKIE_NAME,
         value=access_token,
         httponly=True,
-        secure="False",
+        secure="True",
         samesite="lax",
-        max_age=ACCESS_TOKEN_EXPIRE_DAYS*24*60*60,
+        max_age=ACCESS_TOKEN_EXPIRE_DAYS*1,
     )
 
     return {
@@ -69,9 +69,9 @@ async def login(user_data: UserLogin, response: Response, db:Session = Depends(g
         key=COOKIE_NAME,
         value=access_token,
         httponly=True,
-        secure="False",
+        secure="True",
         samesite="lax",
-        max_age=ACCESS_TOKEN_EXPIRE_DAYS*24*60*60, 
+        max_age=ACCESS_TOKEN_EXPIRE_DAYS*1, 
     )
 
     return {
@@ -89,7 +89,7 @@ async def logout(response: Response):
     response.delete_cookie(
         key=COOKIE_NAME,
         httponly=True,
-        secure="False",
+        secure="True",
         samesite="lax"
     )
     return {"message": "Successfully logged out"}
