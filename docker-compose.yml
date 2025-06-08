@@ -11,7 +11,9 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
     restart: unless-stopped
-
+    networks:
+      - grunland_network 
+  
   fastapi-app:
     build: .
     container_name: grunland_fastapi
@@ -25,6 +27,41 @@ services:
     depends_on:
       - db
     restart: unless-stopped
+    networks:
+      - grunland_network
+
+  locust-master:
+    image: locustio/locust:2.17.0
+    ports:
+      - "8089:8089"
+    volumes:
+      - ./app/load_tests:/mnt/locust
+    command: -f /mnt/locust/locustfile.py --master --host=http://fastapi-app:8000
+    environment:
+      - LOCUST_HOST=http://fastapi-app:8000
+    depends_on:
+      - fastapi-app
+    networks:
+      - grunland_network
+  
+  locust-worker:
+    image: locustio/locust:2.17.0
+    volumes:
+      - ./app/load_tests:/mnt/locust
+    command: -f /mnt/locust/locustfile.py --worker --master-host=locust-master
+    environment:
+      - LOCUST_HOST=http://fastapi-app:8000
+    depends_on:
+      - locust-master
+      - fastapi-app
+    deploy:
+      replicas: 2  
+    networks:
+      - grunland_network
 
 volumes:
   postgres_data:
+
+networks:
+  grunland_network:
+    driver: bridge
