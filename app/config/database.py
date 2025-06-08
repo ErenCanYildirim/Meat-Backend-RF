@@ -3,6 +3,8 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 import os 
 
+from app.crud.roles import initialize_default_roles
+
 SQLITE_DATABASE_URL = "sqlite:///./grunland.db"
 
 engine = create_engine(
@@ -13,6 +15,21 @@ engine = create_engine(
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 Base = declarative_base()
+
+def create_tables():
+    Base.metadata.create_all(bind=engine)
+
+def init_database():
+    create_tables()
+
+    db = SessionLocal()
+    try:
+        initialize_default_roles(db)
+        print("DB init...")
+    except Exception as e:
+        print(f"Error init. db: {e}")
+    finally:
+        db.close()
 
 def get_db():
     db = SessionLocal()

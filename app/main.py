@@ -13,10 +13,19 @@ from fastapi.middleware.gzip import GZipMiddleware
 from app.middleware.rate_limiter import InMemoryRateLimiter
 
 #user.Base.metadata.create_all(bind=engine)
-Base.metadata.create_all(bind=engine)
+#Base.metadata.create_all(bind=engine)
 
+from app.config.database import init_database
+from contextlib import asynccontextmanager
 
-app = FastAPI(title="Grunland API")
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    init_database()
+    print("DB initialized")
+    yield
+    print("Cleanup complete")
+
+app = FastAPI(title="Grunland API", lifespan=lifespan)
 
 @app.get("/")
 def read_root():
