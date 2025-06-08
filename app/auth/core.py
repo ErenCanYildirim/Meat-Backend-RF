@@ -1,8 +1,3 @@
-SECRET_KEY = "secret-key"
-ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_DAYS = 1
-COOKIE_NAME = "auth_token"
-
 from fastapi import HTTPException, Depends, Response, Request, status 
 from fastapi.security import OAuth2PasswordBearer
 from passlib.context import CryptContext
@@ -17,6 +12,15 @@ from pydantic import EmailStr
 
 from app.crud.user import get_user_by_company_name
 from app.schemas.user import TokenData
+
+from dotenv import load_dotenv
+import os
+load_dotenv()
+
+SECRET_KEY = os.getenv("SECRET_KEY")
+ALGORITHM = os.getenv("ALGORITHM", "HS256")
+ACCESS_TOKEN_EXPIRE_DAYS = int(os.getenv("ACCESS_TOKEN_EXPIRE_DAYS", 1))
+COOKIE_NAME = os.getenv("COOKIE_NAME", "auth_token")
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl = "login")
@@ -120,3 +124,4 @@ async def get_current_user_debug(request:Request, db:Session = Depends(get_db)):
         #print("User not found")
         raise credentials_exception
     return user 
+

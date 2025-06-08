@@ -15,9 +15,12 @@ from app.auth.core import (
 )
 from app.models.user import User
 from app.crud.user import get_user, get_user_by_email, get_user_by_company_name, create_user_with_hashed_password
-router = APIRouter(prefix="/auth", tags=["Auth"])
 
-#Test comment
+from app.models.password_reset import PasswordResetToken
+from app.schemas.password import ForgotPasswordRequest, ResetPasswordRequest
+from app.auth.pw_reset import generate_reset_token, hash_password, verify_password
+
+router = APIRouter(prefix="/auth", tags=["Auth"])
 
 @router.post("/register", response_model=dict)
 async def register(user_data: UserCreate, response: Response, db:Session = Depends(get_db)):
@@ -38,9 +41,9 @@ async def register(user_data: UserCreate, response: Response, db:Session = Depen
         key=COOKIE_NAME,
         value=access_token,
         httponly=True,
-        secure="True",
+        secure=False,
         samesite="lax",
-        max_age=ACCESS_TOKEN_EXPIRE_DAYS*1,
+        max_age=ACCESS_TOKEN_EXPIRE_DAYS*3600,
     )
 
     return {
@@ -70,9 +73,9 @@ async def login(user_data: UserLogin, response: Response, db:Session = Depends(g
         key=COOKIE_NAME,
         value=access_token,
         httponly=True,
-        secure="True",
+        secure=False,
         samesite="lax",
-        max_age=ACCESS_TOKEN_EXPIRE_DAYS*1, 
+        max_age=ACCESS_TOKEN_EXPIRE_DAYS*3600, 
     )
 
     return {
@@ -90,7 +93,7 @@ async def logout(response: Response):
     response.delete_cookie(
         key=COOKIE_NAME,
         httponly=True,
-        secure="True",
+        secure=False,
         samesite="lax"
     )
     return {"message": "Successfully logged out"}
@@ -98,3 +101,55 @@ async def logout(response: Response):
 @router.get("/me", response_model=UserResponse)
 async def read_users_me(current_user:User = Depends(get_current_user)):
     return current_user
+
+#---- Forgot Password --------
+
+@router.post("/forgot-password")
+async def forgot_password(request: ForgotPasswordRequest, db: Session = Depends(get_db)):
+
+    user = db.query(User).filter(User.email == request.email).first()
+    if not user:
+        return {"message": "If the email exists, a reset link has been sent."}
+
+    token = generate_reset_token()
+    expires_at = datetime.utcnow() + timedelta(hours=1)
+
+    db.query(PasswordResetToken).filter(PasswordResetToken.email == request.email).delete()
+
+    reset_token = PasswordResetToken(
+        token = token,
+        email = request.email,
+        expires_at = expires_at
+    )
+    db.add(reset_token)
+    db.commit()
+
+    email_sent = "" #send_email_reset(request.email, token)
+    if not email_sent:
+        raise HTTPException(status_code=500, detail="Failed to sent email!")
+    return {"message": "If the email exits, a reset link has been sent!"}
+
+@router.post("/reset-password")
+async def reset_password(request: ResetPasswordRequest, db: Session=Depends(get_db)):
+
+    token_record = db.query(PasswordResetToken).filter(
+        PasswordResetToken.token == request.token,
+        PasswordResetToken.used == False 
+    ).first()
+
+    if not token_record:
+        raise HTTPException(status_code=400, detail="Invalid or expired token!")
+
+    if datetime.utcnow() > token_record.expires_at:
+        raise HTTPException(status_code=400, detail="Token has expired!")
+    
+    user = db.query(User).filter(User.email == token_record.email).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    user.hashed_password = get_password_hash(request.new_password)
+
+    token_record.used = True 
+    db.commit()
+
+    return {"message": "Password succesfully reset"}

@@ -18,7 +18,6 @@ class RoleRead(RoleBase):
     class Config:
         orm_mode = True
 
-
 class UserBase(BaseModel):
     email: EmailStr
     company_name: Optional[str] = None

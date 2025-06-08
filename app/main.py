@@ -12,7 +12,9 @@ from fastapi.middleware.gzip import GZipMiddleware
 
 from app.middleware.rate_limiter import InMemoryRateLimiter
 
-user.Base.metadata.create_all(bind=engine)
+#user.Base.metadata.create_all(bind=engine)
+Base.metadata.create_all(bind=engine)
+
 
 app = FastAPI(title="Grunland API")
 
