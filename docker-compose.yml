@@ -1,19 +1,30 @@
-version: '3.8'
-
 services:
+  db:
+    image: postgres:15-alpine
+    container_name: grunland_postgres
+    environment:
+      POSTGRES_DB: grunland_db
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: alphabet
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
+
   fastapi-app:
     build: .
+    container_name: grunland_fastapi
     ports:
       - "8000:8000"
     environment:
       - ENVIRONMENT=docker
+      - DATABASE_URL=postgresql://admin:alphabet@db:5432/grunland_db
     volumes:
-      # Optional: mount for development
       - ./app:/app/app
+    depends_on:
+      - db
     restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 40s
+
+volumes:
+  postgres_data:

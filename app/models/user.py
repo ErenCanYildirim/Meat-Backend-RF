@@ -4,6 +4,9 @@ from enum import Enum
 
 from .base import Base, TimestampMixin, UUIDMixin
 
+__all__ = ["User", "Role", "UserRoleEnum", "user_roles"]
+
+
 class UserRoleEnum(str, Enum):
     ADMIN = "admin"
     MANAGER = "manager"

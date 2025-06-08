@@ -11,9 +11,9 @@ def create_role(db: Session, role_name: str, description: str = "") -> Role:
         name=role_name,
         description=description
     )
-    db.add(auth_role)
+    db.add(db_role)
     db.commit()
-    db.refresh(db_token)
+    db.refresh(db_role)
     return db_role
 
 def get_or_create_role(db: Session, role_name: str, description: str = "") -> Role:
