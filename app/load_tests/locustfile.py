@@ -8,7 +8,6 @@ class AuthUser(HttpUser):
     wait_time = between(1, 3) 
     
     def on_start(self):
-        """Called when a user starts - generates unique user data"""
         self.user_id = ''.join(random.choices(string.ascii_lowercase + string.digits, k=8))
         self.email = f"test_{self.user_id}@example.com"
         self.company_name = f"TestCompany_{self.user_id}"
@@ -17,7 +16,6 @@ class AuthUser(HttpUser):
         self.is_logged_in = False
     
     def generate_unique_user_data(self):
-        """Generate unique user data for registration"""
         user_id = ''.join(random.choices(string.ascii_lowercase + string.digits, k=8))
         return {
             "email": f"loadtest_{user_id}@example.com",
@@ -27,7 +25,6 @@ class AuthUser(HttpUser):
     
     @task(3)
     def register_user(self):
-        """Test user registration"""
         user_data = self.generate_unique_user_data()
         
         with self.client.post(
@@ -41,7 +38,6 @@ class AuthUser(HttpUser):
                     response.failure(f"Registration failed: {response_data['error']}")
                 else:
                     response.success()
-                    # Store cookies for potential future use
                     if 'Set-Cookie' in response.headers:
                         self.client.cookies.update(response.cookies)
             else:
@@ -49,8 +45,6 @@ class AuthUser(HttpUser):
     
     @task(5)
     def login_existing_user(self):
-        """Test login with pre-created users"""
-        # Use a pool of pre-existing test users
         test_users = [
             {"email": "admin@test.com", "password": "admin123"},
             {"email": "user1@test.com", "password": "user123"},
@@ -68,11 +62,9 @@ class AuthUser(HttpUser):
             if response.status_code == 200:
                 response_data = response.json()
                 if "error" in response_data:
-                    # This might be expected if test users don't exist
-                    response.success()  # Don't fail the test, just log
+                    response.success() 
                 else:
                     response.success()
-                    # Store authentication cookies
                     if 'Set-Cookie' in response.headers:
                         self.client.cookies.update(response.cookies)
                         self.is_logged_in = True
@@ -81,7 +73,6 @@ class AuthUser(HttpUser):
     
     @task(2)
     def register_and_login_flow(self):
-        """Test the complete registration and login flow"""
         user_data = self.generate_unique_user_data()
         
         # Step 1: Register
@@ -93,11 +84,9 @@ class AuthUser(HttpUser):
             if reg_response.status_code == 200:
                 reg_data = reg_response.json()
                 if "error" not in reg_data:
-                    # Registration successful, store cookies
                     if 'Set-Cookie' in reg_response.headers:
                         self.client.cookies.update(reg_response.cookies)
                     
-                    # Step 2: Test /me endpoint with the registered user
                     with self.client.get(
                         "/auth/me",
                         catch_response=True
@@ -107,14 +96,12 @@ class AuthUser(HttpUser):
                         else:
                             me_response.failure(f"Failed to access /me: {me_response.status_code}")
                     
-                    # Step 3: Logout
                     with self.client.get(
                         "/auth/logout",
                         catch_response=True
                     ) as logout_response:
                         if logout_response.status_code == 200:
                             logout_response.success()
-                            # Clear cookies after logout
                             self.client.cookies.clear()
                         else:
                             logout_response.failure(f"Logout failed: {logout_response.status_code}")
@@ -127,8 +114,6 @@ class AuthUser(HttpUser):
     
     @task(1)
     def test_me_endpoint_unauthorized(self):
-        """Test /me endpoint without authentication"""
-        # Clear cookies to test unauthorized access
         temp_cookies = self.client.cookies.copy()
         self.client.cookies.clear()
         
@@ -137,16 +122,14 @@ class AuthUser(HttpUser):
             catch_response=True
         ) as response:
             if response.status_code == 401:
-                response.success()  # Expected unauthorized response
+                response.success()  
             else:
                 response.failure(f"Expected 401, got {response.status_code}")
         
-        # Restore cookies
         self.client.cookies.update(temp_cookies)
     
     @task(1)
     def test_logout(self):
-        """Test logout endpoint"""
         with self.client.get(
             "/auth/logout",
             catch_response=True
@@ -162,7 +145,6 @@ class AuthUser(HttpUser):
     
     @task(1)
     def test_invalid_login(self):
-        """Test login with invalid credentials"""
         invalid_data = {
             "email": "nonexistent@example.com",
             "password": "wrongpassword"
@@ -176,7 +158,7 @@ class AuthUser(HttpUser):
             if response.status_code == 200:
                 response_data = response.json()
                 if "error" in response_data:
-                    response.success()  # Expected error response
+                    response.success() 
                 else:
                     response.failure("Expected error for invalid login")
             else:
@@ -184,9 +166,7 @@ class AuthUser(HttpUser):
 
 
 class HighLoadAuthUser(HttpUser):
-    """More aggressive load testing user"""
-    wait_time = between(0.1, 0.5)  # Very short wait times
-    
+    wait_time = between(0.1, 0.5)  
     def on_start(self):
         self.user_id = ''.join(random.choices(string.ascii_lowercase + string.digits, k=12))
     
@@ -202,9 +182,7 @@ class HighLoadAuthUser(HttpUser):
         self.client.post("/auth/register", json=user_data)
 
 
-# Configuration for different test scenarios
 class StressTestUser(HttpUser):
-    """User class for stress testing with higher concurrency"""
     wait_time = between(0.5, 1.5)
     
     def on_start(self):

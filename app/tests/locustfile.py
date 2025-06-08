@@ -6,16 +6,14 @@ from faker import Faker
 fake = Faker()
 
 class AuthUser(HttpUser):
-    wait_time = between(1, 3)  # Wait 1-3 seconds between requests
+    wait_time = between(1, 3) 
     
     def on_start(self):
-        """Called when a user starts - setup initial data"""
         self.user_data = None
         self.is_logged_in = False
         self.cookies = {}
         
     def generate_unique_user_data(self):
-        """Generate unique user data for registration"""
         random_suffix = ''.join(random.choices(string.ascii_lowercase + string.digits, k=8))
         return {
             "email": f"test_{random_suffix}@example.com",
@@ -27,7 +25,6 @@ class AuthUser(HttpUser):
     
     @task(2)
     def register_user(self):
-        """Test user registration"""
         user_data = self.generate_unique_user_data()
         
         with self.client.post(
@@ -40,7 +37,6 @@ class AuthUser(HttpUser):
                 if "error" in response_data:
                     response.failure(f"Registration failed: {response_data['error']}")
                 else:
-                    # Store user data and cookies for subsequent requests
                     self.user_data = user_data
                     self.is_logged_in = True
                     self.cookies = response.cookies
@@ -50,11 +46,10 @@ class AuthUser(HttpUser):
     
     @task(3)
     def login_user(self):
-        """Test user login"""
-        # Use existing user data or create new one
+
         if not self.user_data:
             self.user_data = self.generate_unique_user_data()
-            # First register the user
+
             self.client.post("/auth/register", json=self.user_data)
         
         login_data = {
@@ -80,7 +75,7 @@ class AuthUser(HttpUser):
     
     @task(4)
     def get_current_user(self):
-        """Test getting current user info (protected endpoint)"""
+
         if not self.is_logged_in:
             # Login first
             self.login_user()
@@ -93,7 +88,7 @@ class AuthUser(HttpUser):
             if response.status_code == 200:
                 response.success()
             elif response.status_code == 401:
-                # Token might be expired, try to login again
+
                 self.is_logged_in = False
                 response.failure("Unauthorized - token expired or invalid")
             else:
@@ -101,7 +96,7 @@ class AuthUser(HttpUser):
     
     @task(1)
     def logout_user(self):
-        """Test user logout"""
+
         if self.is_logged_in:
             with self.client.get(
                 "/auth/logout",
@@ -117,7 +112,7 @@ class AuthUser(HttpUser):
     
     @task(1)
     def test_duplicate_email_registration(self):
-        """Test registration with duplicate email (should fail)"""
+
         if self.user_data:
             duplicate_data = self.user_data.copy()
             duplicate_data["company_name"] = f"DifferentCompany_{random.randint(1000, 9999)}"
@@ -138,7 +133,7 @@ class AuthUser(HttpUser):
     
     @task(1)
     def test_duplicate_company_registration(self):
-        """Test registration with duplicate company name (should fail)"""
+
         if self.user_data:
             duplicate_data = self.user_data.copy()
             duplicate_data["email"] = f"different_{random.randint(1000, 9999)}@example.com"
@@ -159,7 +154,7 @@ class AuthUser(HttpUser):
     
     @task(1)
     def test_invalid_login(self):
-        """Test login with invalid credentials"""
+
         invalid_data = {
             "email": "nonexistent@example.com",
             "password": "wrongpassword"
@@ -181,7 +176,7 @@ class AuthUser(HttpUser):
     
     @task(1)
     def test_unauthorized_access(self):
-        """Test accessing protected endpoint without authentication"""
+
         with self.client.get(
             "/auth/me",
             catch_response=True
@@ -193,7 +188,7 @@ class AuthUser(HttpUser):
 
 
 class AuthUserScenario(HttpUser):
-    """Realistic user behavior scenario"""
+
     wait_time = between(2, 5)
     
     def on_start(self):
@@ -213,9 +208,8 @@ class AuthUserScenario(HttpUser):
     
     @task
     def user_journey(self):
-        """Complete user journey: register -> login -> check profile -> logout"""
         
-        # Step 1: Register
+        #Register
         if not self.user_data:
             self.user_data = self.generate_unique_user_data()
             response = self.client.post("/auth/register", json=self.user_data)
@@ -223,19 +217,19 @@ class AuthUserScenario(HttpUser):
                 self.is_logged_in = True
                 self.cookies = response.cookies
         
-        # Step 2: Check profile multiple times (simulating app usage)
+        #Check profile multiple times
         for _ in range(random.randint(2, 5)):
             if self.is_logged_in:
                 self.client.get("/auth/me", cookies=self.cookies)
                 self.wait()
         
-        # Step 3: Logout
+        #Logout
         if self.is_logged_in:
             self.client.get("/auth/logout", cookies=self.cookies)
             self.is_logged_in = False
             self.cookies = {}
         
-        # Step 4: Login again (returning user behavior)
+        #Login again
         if self.user_data:
             login_data = {
                 "email": self.user_data["email"],
@@ -246,7 +240,7 @@ class AuthUserScenario(HttpUser):
                 self.is_logged_in = True
                 self.cookies = response.cookies
         
-        # Step 5: Use the app (check profile again)
+        #check profile again
         if self.is_logged_in:
             for _ in range(random.randint(1, 3)):
                 self.client.get("/auth/me", cookies=self.cookies)
