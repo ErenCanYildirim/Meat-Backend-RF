@@ -43,6 +43,7 @@ app = FastAPI(title="Grundland API", lifespan=lifespan)
 
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
 
+
 @app.get("/")
 def read_root():
     return {"message": "Hello"}

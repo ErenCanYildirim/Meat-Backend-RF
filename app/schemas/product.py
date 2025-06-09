@@ -2,10 +2,12 @@ from pydantic import BaseModel, Field
 from typing import Optional
 from app.models.product import ProductCategory
 
+
 class ProductBase(BaseModel):
     description: str = Field(..., min_length=1, max_length=100)
     image_link: Optional[str] = None
     category: ProductCategory
+
 
 class ProductCreate(ProductBase):
     pass

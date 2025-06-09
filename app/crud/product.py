@@ -9,14 +9,23 @@ from app.schemas.product import (
     ProductResponse,
 )
 
+
 def get_product(db: Session, product_id: int) -> Optional[Product]:
     return db.query(Product).filter(Product.id == product_id).first()
+
 
 def get_products(db: Session) -> List[Product]:
     return db.query(Product).order_by(desc(Product.id)).all()
 
+
 def get_products_by_category(db: Session, category: ProductCategory) -> List[Product]:
-    return db.query(Product).filter(Product.category == category).order_by(desc(Product.id)).all()
+    return (
+        db.query(Product)
+        .filter(Product.category == category)
+        .order_by(desc(Product.id))
+        .all()
+    )
+
 
 def create_product(db: Session, product: ProductCreate) -> Product:
     db_product = Product(**product.dict())
@@ -25,7 +34,10 @@ def create_product(db: Session, product: ProductCreate) -> Product:
     db.refresh(db_product)
     return db_product
 
-def update_product(db: Session, product_id: int, product_update: ProductUpdate) -> Optional[Product]:
+
+def update_product(
+    db: Session, product_id: int, product_update: ProductUpdate
+) -> Optional[Product]:
     db_product = db.query(Product).filter(Product.id == product_id).first()
     if db_product:
         update_data = product_update.dict(exclude_unset=True)
@@ -35,6 +47,7 @@ def update_product(db: Session, product_id: int, product_update: ProductUpdate) 
         db.refresh(db_product)
     return db_product
 
+
 def delete_product(db: Session, product_id: int) -> bool:
     db_product = db.query(Product).filter(Product.id == product_id).first()
     if db_product:
@@ -42,4 +55,3 @@ def delete_product(db: Session, product_id: int) -> bool:
         db.commit()
         return True
     return False
-
