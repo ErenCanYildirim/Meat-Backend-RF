@@ -81,7 +81,8 @@ async def get_current_user(request: Request, db: Session = Depends(get_db)):
         raise credentials_exception
     return user
 
-async def v1_get_current_user(request:Request, db:Session = Depends(get_db)):
+#Delete this later for prod.
+async def old_get_current_user(request:Request, db:Session = Depends(get_db)):
     credentials_exception = HTTPException(
         status_code = status.HTTP_401_UNAUTHORIZED,
         detail = "Could not validate credentials!",

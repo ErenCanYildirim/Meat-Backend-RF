@@ -27,7 +27,7 @@ class RoleChecker:
             raise credentials_exception
         
         try:
-            payload = jwt.decode(token, SECRET_KEY, algorithm=[ALGORITHM])
+            payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
             company_name: str = payload.get("sub")
             user_roles: List[str] = payload.get("roles", [])
 
@@ -48,8 +48,8 @@ def require_admin():
 def require_manager():
     return RoleChecker([UserRoleEnum.MANAGER.value, UserRoleEnum.ADMIN.value])
 
-def requirer_customer():
+def require_customer():
     return RoleChecker([UserRoleEnum.CUSTOMER.value,
-                        UserRoleEnum.ADMIN.value,
+                        UserRoleEnum.MANAGER.value,
                         UserRoleEnum.ADMIN.value])
 
