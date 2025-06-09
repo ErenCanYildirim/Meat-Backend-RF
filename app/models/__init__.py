@@ -9,5 +9,5 @@ __all__ = [
     "Order",
     "OrderItem",
     "Product",
-    "Category"
+    "Category",
 ]

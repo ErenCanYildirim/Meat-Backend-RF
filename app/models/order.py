@@ -4,4 +4,3 @@ from decimal import Decimal
 import enum
 
 from .base import Base, TimestampMixin, UUIDMixin
-

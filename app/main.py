@@ -13,7 +13,8 @@ from app.config.database import init_database
 from contextlib import asynccontextmanager
 import sys
 
-#app.add_middleware(InMemoryRateLimiter, login_limit=(5,60), general_limit=(20,60))
+# app.add_middleware(InMemoryRateLimiter, login_limit=(5,60), general_limit=(20,60))
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -28,15 +29,19 @@ async def lifespan(app: FastAPI):
     yield
     print("Application shutdown complete!")
 
+
 app = FastAPI(title="Grundland API", lifespan=lifespan)
+
 
 @app.get("/")
 def read_root():
     return {"message": "Hello"}
 
+
 @app.get("/health", tags=["Health"])
 async def health_check():
-    return JSONResponse(content={"status":"ok"})
+    return JSONResponse(content={"status": "ok"})
+
 
 app.include_router(user_router.router)
 app.include_router(auth_router.router)

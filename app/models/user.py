@@ -12,12 +12,14 @@ class UserRoleEnum(str, Enum):
     MANAGER = "manager"
     CUSTOMER = "customer"
 
+
 user_roles = Table(
-    'user_roles',
+    "user_roles",
     Base.metadata,
-    Column('user_id', String, ForeignKey('users.id'), primary_key=True),
-    Column('role_id', String, ForeignKey('roles.id'), primary_key=True)
+    Column("user_id", String, ForeignKey("users.id"), primary_key=True),
+    Column("role_id", String, ForeignKey("roles.id"), primary_key=True),
 )
+
 
 class Role(Base, UUIDMixin, TimestampMixin):
     __tablename__ = "roles"
@@ -30,6 +32,7 @@ class Role(Base, UUIDMixin, TimestampMixin):
     def __repr__(self):
         return f"<Role(name='{self.name}')>"
 
+
 class User(Base, UUIDMixin, TimestampMixin):
     __tablename__ = "users"
 
@@ -38,13 +41,13 @@ class User(Base, UUIDMixin, TimestampMixin):
     company_name = Column(String(100), unique=True, index=True, nullable=False)
     is_active = Column(Boolean, default=True, nullable=False)
 
-    #relationships
+    # relationships
     roles = relationship("Role", secondary=user_roles, back_populates="users")
-    #orders = relationship("Order", back_populates="user", cascade="all, delete-orphan")
+    # orders = relationship("Order", back_populates="user", cascade="all, delete-orphan")
 
     def __repr__(self):
-        return f"<User(id={self.id}, email='{self.email}', company_name='{self.company_name}', active={self.is_active})>"    
-    
+        return f"<User(id={self.id}, email='{self.email}', company_name='{self.company_name}', active={self.is_active})>"
+
     def has_role(self, role_name: str) -> bool:
         """Check if user has a specific role"""
         return any(role.name == role_name for role in self.roles)

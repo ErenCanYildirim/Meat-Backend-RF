@@ -4,37 +4,44 @@ from uuid import uuid4
 from app.models.user import User, Role
 from app.schemas.user import UserCreate, UserCreateWithRoles, UserUpdate
 
+
 def get_users(db: Session):
     return db.query(User).all()
+
 
 def get_user(db: Session, user_id: str):
     return db.query(User).filter(User.id == user_id).first()
 
+
 def get_user_by_company_name(db: Session, company_name: str):
-    #print(f"Searching for company_name: '{company_name}'")
+    # print(f"Searching for company_name: '{company_name}'")
     result = db.query(User).filter(User.company_name == company_name).first()
-    #if result:
-        #print(f"Found user: ID={result.id}, Email={result.email}, Company={result.company_name}")
-    #else:
-        #print("No user found")
+    # if result:
+    # print(f"Found user: ID={result.id}, Email={result.email}, Company={result.company_name}")
+    # else:
+    # print("No user found")
     return result
+
 
 def get_user_by_email(db: Session, email: str):
     return db.query(User).filter(User.email == email).first()
 
+
 def create_user_with_hashed_password(db: Session, user: UserCreate):
     from app.auth import get_password_hash
+
     hashed_password = get_password_hash(user.password)
     db_user = User(
         id=str(uuid4()),
         email=user.email,
         company_name=user.company_name,
-        hashed_password=hashed_password
+        hashed_password=hashed_password,
     )
     db.add(db_user)
     db.commit()
     db.refresh(db_user)
     return db_user
+
 
 def create_user_with_roles(db: Session, user: UserCreateWithRoles):
     db_user = create_user(db, user)
@@ -43,6 +50,7 @@ def create_user_with_roles(db: Session, user: UserCreateWithRoles):
         db_user.roles = roles
         db.commit()
     return db_user
+
 
 def update_user(db: Session, user_id: str, user_update: UserUpdate):
     db_user = db.query(User).filter(User.id == user_id).first()
@@ -72,10 +80,10 @@ def update_user(db: Session, user_id: str, user_update: UserUpdate):
 
 
 def delete_user(db: Session, user_id: str):
-    
+
     db_user = db.query(User).filter(User.id == user_id).first()
     if not db_user:
-        return None 
+        return None
 
     db.delete(db_user)
     db.commit()

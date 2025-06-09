@@ -4,7 +4,8 @@ from fastapi import FastAPI
 from fastapi.testclient import TestClient
 from app.middleware.rate_limiter import InMemoryRateLimiter
 
-#A new test client will be provided, as the ip is shared here
+# A new test client will be provided, as the ip is shared here
+
 
 def create_test_client():
     app = FastAPI()
@@ -21,6 +22,7 @@ def create_test_client():
 
     return TestClient(app)
 
+
 def test_login_rate_limit():
     client = create_test_client()
 
@@ -32,6 +34,7 @@ def test_login_rate_limit():
     assert res.status_code == 429
     assert "Too many requests" in res.text
 
+
 def test_general_rate_limit():
     client = create_test_client()
 
@@ -42,6 +45,7 @@ def test_general_rate_limit():
     res = client.get("/some-endpoint")
     assert res.status_code == 429
     assert "Too many requests" in res.text
+
 
 def test_rate_limit_reset():
     client = create_test_client()

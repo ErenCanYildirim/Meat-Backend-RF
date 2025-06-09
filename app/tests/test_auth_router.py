@@ -38,6 +38,7 @@ app.dependency_overrides[get_db] = override_get_db
 # Fixtures
 # ----------------------------
 
+
 @pytest.fixture(scope="session", autouse=True)
 def create_test_db():
     """Setup and teardown the real SQLite DB"""
@@ -58,13 +59,14 @@ def create_test_db():
     Base.metadata.drop_all(bind=engine)
 
     import time
+
     time.sleep(0.1)
 
     try:
         if os.path.exists("test_grunland.db"):
             os.remove("test_grunland.db")
     except PermissionError:
-        pass 
+        pass
 
 
 @pytest.fixture
@@ -86,8 +88,9 @@ def user_data():
     return {
         "email": "test@example.com",
         "password": "testpass123",
-        "company_name": "TestCo"
+        "company_name": "TestCo",
     }
+
 
 @pytest.fixture
 def created_user(db, user_data):
@@ -95,21 +98,24 @@ def created_user(db, user_data):
         email=user_data["email"],
         hashed_password=get_password_hash(user_data["password"]),
         company_name=user_data["company_name"],
-        created_at=datetime.now(timezone.utc)
+        created_at=datetime.now(timezone.utc),
     )
     db.add(user)
     db.commit()
     db.refresh(user)
     return user
 
+
 @pytest.fixture(autouse=True)
 def clean_users(db):
     db.query(User).delete()
     db.commit()
 
+
 # ----------------------------
 # Test Suites
 # ----------------------------
+
 
 class TestRegistration:
     def test_successful_registration(self, client, user_data):
@@ -132,7 +138,7 @@ class TestRegistration:
         new_user_data = {
             "email": "new@example.com",
             "password": "testpass123",
-            "company_name": created_user.company_name
+            "company_name": created_user.company_name,
         }
         response = client.post("/auth/register", json=new_user_data)
         assert response.status_code == 200
@@ -143,10 +149,10 @@ class TestRegistration:
 
 class TestLogin:
     def test_successful_login(self, client, created_user, user_data):
-        response = client.post("/auth/login", json={
-            "email": user_data["email"],
-            "password": user_data["password"]
-        })
+        response = client.post(
+            "/auth/login",
+            json={"email": user_data["email"], "password": user_data["password"]},
+        )
         assert response.status_code == 200
         data = response.json()
         assert "user" in data
@@ -154,20 +160,19 @@ class TestLogin:
         assert COOKIE_NAME in response.cookies
 
     def test_wrong_password(self, client, created_user, user_data):
-        response = client.post("/auth/login", json={
-            "email": user_data["email"],
-            "password": "wrongpassword"
-        })
+        response = client.post(
+            "/auth/login",
+            json={"email": user_data["email"], "password": "wrongpassword"},
+        )
         assert response.status_code == 200
         data = response.json()
         assert "error" in data
         assert data["error"] == "Falscher Nutzername oder Passwort!"
 
     def test_nonexistent_user(self, client):
-        response = client.post("/auth/login", json={
-            "email": "nonexistent@example.com",
-            "password": "pass"
-        })
+        response = client.post(
+            "/auth/login", json={"email": "nonexistent@example.com", "password": "pass"}
+        )
         assert response.status_code == 200
         data = response.json()
         assert "error" in data
@@ -185,29 +190,31 @@ class TestLogout:
 class TestAuthenticatedEndpoints:
     def test_me_endpoint_with_auth(self, client, created_user, user_data):
         print(f"=== TEST DEBUG ===")
-        print(f"Created user: ID={created_user.id}, Email={created_user.email}, Company={created_user.company_name}")
+        print(
+            f"Created user: ID={created_user.id}, Email={created_user.email}, Company={created_user.company_name}"
+        )
         print(f"User data: {user_data}")
-        
-        login_response = client.post("/auth/login", json={
-            "email": user_data["email"],
-            "password": user_data["password"]
-        })
+
+        login_response = client.post(
+            "/auth/login",
+            json={"email": user_data["email"], "password": user_data["password"]},
+        )
         print(f"Login response status: {login_response.status_code}")
         print(f"Login response body: {login_response.json()}")
-        
+
         assert login_response.status_code == 200
-        
+
         cookies = login_response.cookies
         print(f"Cookies from login: {cookies}")
-        
+
         response = client.get("/auth/me", cookies=cookies)
         print(f"Me response status: {response.status_code}")
-        
+
         if response.status_code != 200:
             print(f"Me response error: {response.json()}")
         else:
             print(f"Me response success: {response.json()}")
-        
+
         assert response.status_code == 200
         data = response.json()
         assert data["email"] == user_data["email"]
@@ -228,10 +235,10 @@ class TestCookies:
         assert "SameSite=lax" in cookie_header
 
     def test_cookie_set_on_login(self, client, created_user, user_data):
-        response = client.post("/auth/login", json={
-            "email": user_data["email"],
-            "password": user_data["password"]
-        })
+        response = client.post(
+            "/auth/login",
+            json={"email": user_data["email"], "password": user_data["password"]},
+        )
         assert response.status_code == 200
         assert COOKIE_NAME in response.cookies
         cookie_header = response.headers.get("set-cookie", "")
@@ -241,4 +248,5 @@ class TestCookies:
 
 if __name__ == "__main__":
     import pytest
+
     pytest.main([__file__, "-v"])

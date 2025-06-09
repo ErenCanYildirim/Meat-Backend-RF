@@ -5,8 +5,11 @@ import time
 from typing import Dict, Tuple
 from collections import defaultdict
 
+
 class InMemoryRateLimiter(BaseHTTPMiddleware):
-    def __init__(self, app, login_limit: Tuple[int, int], general_limit: Tuple[int, int]):
+    def __init__(
+        self, app, login_limit: Tuple[int, int], general_limit: Tuple[int, int]
+    ):
         super().__init__(app)
         self.login_limit = login_limit
         self.general_limit = general_limit

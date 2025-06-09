@@ -95,20 +95,21 @@ Beste Grüße,
 {FROM_NAME}
 """
 
+
 def send_reset_email(email: str, token: str):
     try:
         if not SENDGRID_API_KEY:
             print("SendGrid API key not configured")
             return False
-        
+
         reset_link = f"{FRONTEND_URL}/reset-password?token={token}"
 
         message = Mail(
-            from_email = (FROM_EMAIL, FROM_NAME),
+            from_email=(FROM_EMAIL, FROM_NAME),
             to_emails=email,
             subject="Password reset request",
             html_content=reset_template,
-            plain_text=plain_reset_text
+            plain_text=plain_reset_text,
         )
 
         sg = SendGridAPIClient(api_key=SENDGRID_API_KEY)
@@ -120,7 +121,7 @@ def send_reset_email(email: str, token: str):
         else:
             print(f"Failed to send email. Status code: {response.status_code}")
             return False
-            
+
     except Exception as e:
         print(f"Failed to send email via SendGrid: {e}")
         return False
