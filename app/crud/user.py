@@ -36,20 +36,6 @@ def create_user_with_hashed_password(db: Session, user: UserCreate):
     db.refresh(db_user)
     return db_user
 
-#potentially irrelevant and unsafe method
-def create_user(db: Session, user: UserCreate):
-    db_user = User(
-        id=str(uuid4()),
-        email=user.email,
-        hashed_password=user.password,
-        company_name = user.company_name,
-        is_active=user.is_active
-    )
-    db.add(db_user)
-    db.commit()
-    db.refresh(db_user)
-    return db_user
-
 def create_user_with_roles(db: Session, user: UserCreateWithRoles):
     db_user = create_user(db, user)
     if user.role_ids:

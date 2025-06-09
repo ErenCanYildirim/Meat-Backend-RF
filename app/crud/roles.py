@@ -1,6 +1,7 @@
 from sqlalchemy.orm import Session
 from app.models.user import Role, User, UserRoleEnum
 from uuid import uuid4
+from sqlalchemy import func
 
 def get_role_by_name(db: Session, role_name:str) -> Role:
     return db.query(Role).filter(Role.name == role_name).first()
@@ -52,3 +53,7 @@ def initialize_default_roles(db: Session):
         get_or_create_role(db, role_name, description)
     
     print("Default roles initialized successfully")
+
+def count_admin_users(db: Session) -> int:
+    admin_count = db.query(func.count(User.id)).join(User.roles).filter(Role.name=="admin").scalar()
+    return admin_count or 0
