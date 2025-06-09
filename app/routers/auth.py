@@ -20,6 +20,8 @@ from app.models.password_reset import PasswordResetToken
 from app.schemas.password import ForgotPasswordRequest, ResetPasswordRequest
 from app.auth.pw_reset import generate_reset_token, hash_password, verify_password
 
+from app.crud.roles import assign_default_customer_role
+
 router = APIRouter(prefix="/auth", tags=["Auth"])
 
 @router.post("/register", response_model=dict)
@@ -31,6 +33,16 @@ async def register(user_data: UserCreate, response: Response, db:Session = Depen
         return {"error": "Company name already taken!"}
     
     db_user = create_user_with_hashed_password(db, user_data)
+
+    assign_default_customer_role(db, db_user)
+
+    #addition of roles to token
+    user_roles = [role.name for role in db_user.roles]
+    access_token_expires = timedelta(days = ACCESS_TOKEN_EXPIRE_DAYS)
+    access_token = create_access_token(
+        data = {"sub": db_user.company_name, "roles": user_roles},
+        expires_delta = access_token_expires
+    )
 
     access_token_expires = timedelta(days=ACCESS_TOKEN_EXPIRE_DAYS)
     access_token = create_access_token(
@@ -51,23 +63,23 @@ async def register(user_data: UserCreate, response: Response, db:Session = Depen
             "id":db_user.id,
             "email":db_user.email,
             "username":db_user.company_name,
-            "created_at":db_user.created_at
+            "created_at":db_user.created_at,
+            "roles": user_roles
         }
     }
 
 @router.post("/login", response_model=dict)
 async def login(user_data: UserLogin, response: Response, db:Session = Depends(get_db)):
-    #print(f"Login request for email: {user_data.email}")
     user = authenticate_user(db, user_data.email, user_data.password)
     if not user:
         return {"error": "Falscher Nutzername oder Passwort!"}
     
-    #print(f"Authenticated user: ID={user.id}, Email={user.email}, Company={user.company_name}")
+    user_roles = [role.name for role in user.roles]
+
     access_token_expires = timedelta(days=ACCESS_TOKEN_EXPIRE_DAYS)
     access_token = create_access_token(
-        data={"sub":user.company_name}, expires_delta=access_token_expires
+        data={"sub":user.company_name, "roles": user_roles}, expires_delta=access_token_expires
     )
-    #print(f"Creating JWT with sub: '{user.company_name}'")
     
     response.set_cookie(
         key=COOKIE_NAME,
@@ -83,7 +95,8 @@ async def login(user_data: UserLogin, response: Response, db:Session = Depends(g
             "id": user.id,
             "email": user.email,
             "username": user.company_name,
-            "created_at": user.created_at
+            "created_at": user.created_at,
+            "roles": user_roles
         }
     }
     
@@ -124,7 +137,7 @@ async def forgot_password(request: ForgotPasswordRequest, db: Session = Depends(
     db.add(reset_token)
     db.commit()
 
-    email_sent = "" #send_email_reset(request.email, token)
+    email_sent = ""
     if not email_sent:
         raise HTTPException(status_code=500, detail="Failed to sent email!")
     return {"message": "If the email exits, a reset link has been sent!"}
