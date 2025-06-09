@@ -10,6 +10,7 @@ from app.config.database import get_db
 from sqlalchemy.orm import Session
 from app.crud.user import get_user_by_email
 from app.auth.core import get_password_hash
+from app.crud.roles import get_role_by_name
 
 router = APIRouter(prefix="/admin", tags=["Admin"])
 
@@ -45,7 +46,7 @@ async def change_user_role(
     current_user_id = current_user_data.get("user_id")
     if user.id == current_user_id:
         raise HTTPException(
-            status_code=HTTP_403_FORBIDDEN,
+            status_code=status.HTTP_403_FORBIDDEN,
             detail = "Cannot change your own roles"
         )
 
@@ -106,7 +107,7 @@ async def remove_user_role(
             detail = "Cannot remove roles from yourself"
         )
 
-    role_to_remove = get_role_by_name(db, role_removal.role_name)
+    role_to_remove = get_role_by_name(db, role_removal.new_role)
     if not role_to_remove:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -126,7 +127,7 @@ async def remove_user_role(
         user.roles.remove(role_to_remove)
         db.commit()
         db.refresh(user)
-        message = f"Role '{role_removal.role_name}' removed from {role_removal.user_email}"
+        message = f"Role '{role_removal.new_role}' removed from {role_removal.user_email}"
     else:
         message = f"User {role_removal.user_email} doesn't have role '{role_removal.role_name}'"
     

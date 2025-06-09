@@ -29,4 +29,6 @@ jobs:
       - name: Run tests 
         run: |
           pytest app/tests/test_user_router.py 
+          pytest app/tests/test_admin_router.py
+          pytest app/tests/test_auth_router.py
           

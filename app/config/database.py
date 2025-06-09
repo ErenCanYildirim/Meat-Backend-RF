@@ -5,7 +5,6 @@ from sqlalchemy.pool import StaticPool
 import os
 import time
 
-
 ENVIRONMENT = os.getenv("ENVIRONMENT", "local")
 
 if ENVIRONMENT == "docker" or ENVIRONMENT == "production":
