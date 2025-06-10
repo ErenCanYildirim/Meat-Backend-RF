@@ -81,7 +81,7 @@ def create_product(
     db: Session = Depends(get_db),
 ):
     if image:
-        validate_image_file
+        validate_image_file(image)
     try:
         product_data = ProductCreate(description=description, category=category)
 
@@ -164,9 +164,7 @@ def update_product(
                 try:
                     delete_product_image(old_image_path)
                 except Exception as cleanup_error:
-                    logger.warning(
-                        f"Failed to delete old image {old_image_path}: {cleanup_error}"
-                    )
+                    print(f"Failed to delete old image {old_image_path}: {cleanup_error}")
 
             return updated_product
 
@@ -176,9 +174,7 @@ def update_product(
                 try:
                     delete_product_image(new_image_path)
                 except Exception as cleanup_error:
-                    logger.error(
-                        f"Failed to cleanup new image after DB error: {cleanup_error}"
-                    )
+                    print(f"Failed to cleanup new image after DB error: {cleanup_error}")
             raise e
 
     except HTTPException:
@@ -201,11 +197,11 @@ def delete_product(
         try:
             success = crud.product.delete_product_with_image(db, product_id=product_id)
             if not success:
+                db.commit()
                 raise HTTPException(
                     status_code=status.HTTP_404_NOT_FOUND,
                     detail=f"Product with id {product_id} not found",
                 )
-                db.commit()
         except Exception as e:
             db.rollback()
             raise e
@@ -241,7 +237,7 @@ def upload_product_image(
                 custom_filename=db_product.description,
             )
 
-            db.product.image_link = new_image_path
+            db.product.image_link = db_product.image_link
             db.commit()
             db.refresh(db_product)
 
