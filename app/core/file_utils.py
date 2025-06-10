@@ -2,8 +2,15 @@ import os
 import uuid
 from pathlib import Path
 from typing import Optional
-from fastapi import UploadFile, HTTPException
+from fastapi import UploadFile, HTTPException, status
 from app.models.product import ProductCategory
+from sqlalchemy.orm import Session
+from sqlalchemy.exc import SQLAlchemyError
+
+MAX_DESCRIPTION_LENGTH = 100
+MIN_DESCRIPTION_LENGTH = 1
+ALLOWED_IMAGE_TYPES = {"image/jpeg", "image/png", "image/gif", "image/webp"}
+MAX_IMAGE_SIZE = 5 * 1024 * 1024  # 5MB
 
 
 def get_category_folder(category: ProductCategory) -> str:
@@ -75,3 +82,33 @@ def delete_product_image(image_path: str) -> bool:
     except Exception as e:
         print(f"Error deleting image: {e}")
     return False
+
+
+def validate_image_file(image: UploadFile) -> None:
+    if not image.content_type or image.content_type not in ALLOWED_IMAGE_TYPES:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Invalid file type. Allowed types: {', '.join(ALLOWED_IMAGE_TYPES)}",
+        )
+
+    if hasattr(image, "size") and image.size and image.size > MAX_IMAGE_SIZE:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"File too large. Maximum size: {MAX_IMAGE_SIZE // (1024*1024)}MB",
+        )
+
+
+def handle_database_error(e: Exception, operation: str) -> HTTPException:
+    print(f"Database error during {operation} : {str(e)}")
+
+    if isinstance(e, SQLAlchemyError):
+        return HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Database error during {operation}",
+        )
+
+    else:
+        return HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Error during {operation}: {str(e)}",
+        )

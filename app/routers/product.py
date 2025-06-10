@@ -15,7 +15,6 @@ from app.schemas.product import (
     ProductBase,
     ProductCreate,
     ProductUpdate,
-    ProductUpdate,
     ProductResponse,
 )
 from app.models.product import Product, ProductCategory
@@ -23,9 +22,19 @@ from app import crud
 
 from app.config.database import get_db
 from app.auth.dependencies import require_admin
-from app.core.file_utils import save_product_image, delete_product_image
+from app.core.file_utils import (
+    save_product_image,
+    delete_product_image,
+    validate_image_file,
+    handle_database_error,
+    MAX_DESCRIPTION_LENGTH,
+    MIN_DESCRIPTION_LENGTH,
+    ALLOWED_IMAGE_TYPES,
+    MAX_IMAGE_SIZE,
+)
 
-router = APIRouter(prefix="/products", tags=["products"])
+
+router = APIRouter(prefix="/products", tags=["Products"])
 
 
 @router.get("/", response_model=List[ProductResponse])
@@ -33,22 +42,30 @@ def get_all_products(
     category: Optional[ProductCategory] = Query(None, description="Filter by category"),
     db: Session = Depends(get_db),
 ):
-    if category:
-        products = crud.product.get_products_by_category(db, category=category)
-    else:
-        products = crud.product.get_products(db)
-    return products
+    try:
+        if category:
+            products = crud.product.get_products_by_category(db, category=category)
+        else:
+            products = crud.product.get_products(db)
+        return products
+    except Exception as e:
+        raise handle_database_error(e, "get_all_products")
 
 
 @router.get("/{product_id}", response_model=ProductResponse)
 def get_product_by_id(product_id: int, db: Session = Depends(get_db)):
-    product = crud.product.get_product(db, product_id=product_id)
-    if product is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Product with id {product_id} not found",
-        )
-    return product
+    try:
+        product = crud.product.get_product(db, product_id=product_id)
+        if product is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Product with id {product_id} not found",
+            )
+        return product
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise handle_database_error(e, "get_product_by_id")
 
 
 @router.post(
@@ -63,17 +80,30 @@ def create_product(
     image: Optional[UploadFile] = File(None),
     db: Session = Depends(get_db),
 ):
+    if image:
+        validate_image_file
     try:
         product_data = ProductCreate(description=description, category=category)
 
-        return crud.create_product_with_image(
-            db=db, product=product_data, image_file=image
-        )
+        db.begin()
+        try:
+            created_product = crud.product.create_product_with_image(
+                db=db, product=product_data, image_file=image
+            )
+            db.commit()
+            return created_product
+        except Exception as e:
+            db.rollback()
+            if image and hasattr(e, "image_path"):
+                try:
+                    delete_product_image(e.image_path)
+                except Exception as cleanup_error:
+                    print(f"Failed to cleanup image after DB error: {cleanup_error}")
+            raise e
+    except HTTPException:
+        raise
     except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Error creating product: {str(e)}",
-        )
+        raise handle_database_error(e, "creating product")
 
 
 @router.patch(
@@ -83,35 +113,78 @@ def create_product(
 )
 def update_product(
     product_id: int,
-    description: Optional[str] = Form(None, min_length=1, max_length=500),
+    description: Optional[str] = Form(
+        None, min_length=MIN_DESCRIPTION_LENGTH, max_length=MAX_DESCRIPTION_LENGTH
+    ),
     category: Optional[ProductCategory] = Form(None),
     image: Optional[UploadFile] = File(None),
     db: Session = Depends(get_db),
 ):
+    """Update an existing product."""
+    # Validate image if provided
+    if image:
+        validate_image_file(image)
+
     try:
         product_update = ProductUpdate(description=description, category=category)
 
-        updated_product = crud.update_product_with_image(
-            db=db,
-            product_id=product_id,
-            product_update=product_update,
-            image_file=image,
-        )
+        # Use database transaction
+        db.begin()
+        old_image_path = None
+        new_image_path = None
 
-        if updated_product is None:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"Product with id {product_id} not found",
+        try:
+            # Get current product to track old image
+            existing_product = crud.product.get_product(db, product_id=product_id)
+            if not existing_product:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail=f"Product with id {product_id} not found",
+                )
+
+            old_image_path = existing_product.image_link
+
+            updated_product = crud.product.update_product_with_image(
+                db=db,
+                product_id=product_id,
+                product_update=product_update,
+                image_file=image,
             )
 
-        return updated_product
+            if updated_product is None:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail=f"Product with id {product_id} not found",
+                )
+
+            new_image_path = updated_product.image_link
+            db.commit()
+
+            if old_image_path and old_image_path != new_image_path:
+                try:
+                    delete_product_image(old_image_path)
+                except Exception as cleanup_error:
+                    logger.warning(
+                        f"Failed to delete old image {old_image_path}: {cleanup_error}"
+                    )
+
+            return updated_product
+
+        except Exception as e:
+            db.rollback()
+            if new_image_path and new_image_path != old_image_path:
+                try:
+                    delete_product_image(new_image_path)
+                except Exception as cleanup_error:
+                    logger.error(
+                        f"Failed to cleanup new image after DB error: {cleanup_error}"
+                    )
+            raise e
+
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Error updating product: {str(e)}",
-        )
+        raise handle_database_error(e, "updating product")
 
 
 @router.delete(
@@ -123,45 +196,79 @@ def delete_product(
     product_id: int,
     db: Session = Depends(get_db),
 ):
-    success = crud.delete_product_with_image(db, product_id=product_id)
-    if not success:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Product with id {product_id} not found",
-        )
+    try:
+        db.begin()
+        try:
+            success = crud.product.delete_product_with_image(db, product_id=product_id)
+            if not success:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail=f"Product with id {product_id} not found",
+                )
+                db.commit()
+        except Exception as e:
+            db.rollback()
+            raise e
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise handle_database_error(e, "delete_product")
 
 
 @router.post("/{product_id}/image", dependencies=[Depends(require_admin)])
 def upload_product_image(
     product_id: int, image: UploadFile = File(...), db: Session = Depends(get_db)
 ):
-    db_product = crud.get_product(db, product_id=product_id)
-    if not db_product:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Product with id {product_id} not found",
-        )
+    validate_image_file(image)
 
     try:
-        if db_product.image_link:
-            delete_product_image(db_product.image_link)
+        db_product = crud.product.get_product(db, product_id=product_id)
 
-        new_image_link = save_product_image(
-            file=image,
-            category=db_product.category,
-            custom_filename=db_product.description,
-        )
+        if not db_product:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Product with id {product_id} not found",
+            )
 
-        db_product.image_link = new_image_link
-        db.commit()
-        db.refresh(db_product)
+        db.begin()
+        old_image_path = db_product.image_link
+        new_image_path = None
 
-        return {"message": "Image uploaded successfully", "image_link": new_image_link}
+        try:
+            new_image_path = save_product_image(
+                file=image,
+                category=db_product.category,
+                custom_filename=db_product.description,
+            )
+
+            db.product.image_link = new_image_path
+            db.commit()
+            db.refresh(db_product)
+
+            if old_image_path:
+                try:
+                    delete_product_image(old_image_path)
+                except Exception as cleanup_error:
+                    print(
+                        f"Failed to delete old image: {old_image_path}: {cleanup_error}"
+                    )
+            return {
+                "message": "Image successfully uploaded",
+                "image_link": new_image_path,
+            }
+
+        except Exception as e:
+            db.rollback()
+            if new_image_path:
+                try:
+                    delete_product_image(new_image_path)
+                except Exception as cleanup_error:
+                    print(f"Failed to cleanup image after DB error: {cleanup_error}")
+            raise e
+    except HTTPException:
+        raise
     except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Error uploading image: {str(e)}",
-        )
+        raise handle_database_error(e, "upload_product_image")
 
 
 @router.delete("/{product_id}/image", dependencies=[Depends(require_admin)])
@@ -169,73 +276,35 @@ def delete_product_image_only(
     product_id: int,
     db: Session = Depends(get_db),
 ):
-    db_product = crud.get_product(db, product_id=product_id)
-    if not db_product:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Product with id {product_id} not found",
-        )
-
-    if db_product.image_link:
-        delete_product_image(db_product.image_link)
-        db_product.image_link = None
-        db.commit()
-        db.refresh(db_product)
-
-    return {"message": "Image deleted successfully"}
-
-
-"""
-@router.post(
-    "/",
-    response_model=ProductResponse,
-    status_code=status.HTTP_201_CREATED,
-    dependencies=[Depends(require_admin())],
-)
-def create_product(
-    product: ProductCreate,
-    db: Session = Depends(get_db),
-):
     try:
-        return crud.product.create_product(db=db, product=product)
+        db_product = crud.product.get_product(db, product_id=product_id)
+        if not db_product:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Product with id {product_id} not found",
+            )
+
+        db.begin()
+        old_image_path = db_product.image_link
+
+        try:
+            db_product.image_link = None
+            db.commit()
+            db.refresh(db_product)
+
+            if old_image_path:
+                try:
+                    delete_product_image(old_image_path)
+                except Exception as cleanup_error:
+                    print(
+                        f"Failed to delete image file {old_image_path} : {cleanup_error}"
+                    )
+            return {"message": "Image deleted successfully"}
+
+        except Exception as e:
+            db.rollback()
+            raise e
+    except HTTPException:
+        raise
     except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Error creating product: {str(e)}",
-        )
-
-
-@router.patch(
-    "/{product_id}",
-    response_model=ProductResponse,
-    dependencies=[Depends(require_admin())],
-)
-def update_product(
-    product_id: int,
-    product_update: ProductUpdate,
-    db: Session = Depends(get_db),
-):
-    updated_product = crud.product.update_product(
-        db, product_id=product_id, product_update=product_update
-    )
-    if updated_product is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Product with id {product_id} not found",
-        )
-    return updated_product
-
-
-@router.delete(
-    "/{product_id}",
-    status_code=status.HTTP_204_NO_CONTENT,
-    dependencies=[Depends(require_admin())],
-)
-def delete_product(product_id: int, db: Session = Depends(get_db)):
-    success = crud.product.delete_product(db, product_id=product_id)
-    if not success:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Product with id {product_id} not found",
-        )
-"""
+        raise handle_database_error(e, "delete_product_image")

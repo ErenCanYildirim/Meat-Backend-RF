@@ -30,9 +30,9 @@ async def lifespan(app: FastAPI):
         print("Application startup failed. Exiting...")
         sys.exit(1)
     try:
-        print("Adding products")
+        # print("Adding products")
         initialize_products()
-        print("Products initialized")
+        # print("Products initialized")
     except Exception as e:
         print(f"Failed to initialize products!")
     yield
@@ -56,8 +56,8 @@ async def health_check():
 
 app.include_router(user_router.router)
 app.include_router(auth_router.router)
-app.include_router(admin_router.router)
 app.include_router(product_router.router)
+app.include_router(admin_router.router)
 
 app.add_middleware(
     CORSMiddleware,
