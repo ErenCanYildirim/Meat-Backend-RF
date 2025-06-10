@@ -3,6 +3,7 @@ from sqlalchemy.orm import relationship
 from enum import Enum
 
 from .base import Base, TimestampMixin, UUIDMixin
+from app.models.order import Order
 
 __all__ = ["User", "Role", "UserRoleEnum", "user_roles"]
 
@@ -43,7 +44,7 @@ class User(Base, UUIDMixin, TimestampMixin):
 
     # relationships
     roles = relationship("Role", secondary=user_roles, back_populates="users")
-    # orders = relationship("Order", back_populates="user", cascade="all, delete-orphan")
+    orders = relationship("Order", back_populates="user", cascade="all, delete-orphan")
 
     def __repr__(self):
         return f"<User(id={self.id}, email='{self.email}', company_name='{self.company_name}', active={self.is_active})>"
