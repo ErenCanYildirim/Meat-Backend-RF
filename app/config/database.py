@@ -92,6 +92,7 @@ def create_tables():
 def drop_tables():
     Base.metadata.drop_all(bind=engine)
 
+
 def create_root_admin(db: Session):
     from app.crud.user import get_user_by_email, create_user_with_hashed_password
     from app.crud.roles import get_role_by_name, assign_role_to_user
@@ -102,7 +103,9 @@ def create_root_admin(db: Session):
     admin_company = os.getenv("ROOT_ADMIN_COMPANY")
 
     if not all([admin_email, admin_password, admin_company]):
-        print("ROOT_ADMIN_* environment variables are not fully set. Skipping root admin creation.")
+        print(
+            "ROOT_ADMIN_* environment variables are not fully set. Skipping root admin creation."
+        )
         return
 
     existing_user = get_user_by_email(db, admin_email)
@@ -112,22 +115,22 @@ def create_root_admin(db: Session):
 
     admin_role = get_role_by_name(db, "admin")
     if not admin_role:
-        raise Exception("Admin role must be created in the table before creating roo user")
+        raise Exception(
+            "Admin role must be created in the table before creating roo user"
+        )
 
     root_user_create = UserCreate(
-        email = admin_email,
-        password = admin_password,
-        company_name = admin_company,
-        is_active=True
+        email=admin_email,
+        password=admin_password,
+        company_name=admin_company,
+        is_active=True,
     )
 
-    root_user = create_user_with_hashed_password(
-        db,
-        root_user_create
-    )
+    root_user = create_user_with_hashed_password(db, root_user_create)
 
     assign_role_to_user(db, root_user, "admin")
     print(f"Root admin user: '{root_user.email} created")
+
 
 def init_database():
     """Initialize database with proper error handling and retries"""

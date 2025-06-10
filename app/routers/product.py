@@ -164,7 +164,9 @@ def update_product(
                 try:
                     delete_product_image(old_image_path)
                 except Exception as cleanup_error:
-                    print(f"Failed to delete old image {old_image_path}: {cleanup_error}")
+                    print(
+                        f"Failed to delete old image {old_image_path}: {cleanup_error}"
+                    )
 
             return updated_product
 
@@ -174,7 +176,9 @@ def update_product(
                 try:
                     delete_product_image(new_image_path)
                 except Exception as cleanup_error:
-                    print(f"Failed to cleanup new image after DB error: {cleanup_error}")
+                    print(
+                        f"Failed to cleanup new image after DB error: {cleanup_error}"
+                    )
             raise e
 
     except HTTPException:
