@@ -2,6 +2,11 @@ import time
 from typing import Dict, Any
 from app.config.redis_config import get_email_queue
 
+from sqlalchemy.orm import Session
+from app.config.database import get_db
+from app.models.order import Order, OrderState
+
+
 def get_db_session():
     """Get database session using your existing get_db function"""
     # Import here to avoid circular imports and model loading issues
@@ -32,68 +37,32 @@ def update_order_state(order_id: int, new_state):
         db.close()
 
 def generate_pdf_task(order_data: Dict[str, Any]) -> str:
-    """Generate PDF and update order state to INVOICE_GENERATED"""
-    order_id = order_data.get('order_id', 'unknown')
-    print(f"🔄 Starting PDF generation for order {order_id}")
-    print(f"📋 Order details: {order_data}")
-    
-    try:
-        # Import OrderState here to avoid initialization issues
-        from app.models.order import OrderState
-        
-        # Simulate PDF generation
-        time.sleep(3)
-        pdf_filename = f"order_{order_id}.pdf"
-        print(f"✅ PDF generated: {pdf_filename}")
-        
-        # Update order state to INVOICE_GENERATED
-        if update_order_state(order_id, OrderState.INVOICE_GENERATED):
-            print(f"📄 Order {order_id} marked as INVOICE_GENERATED")
-            
-            # Queue email task
-            email_queue = get_email_queue()
-            email_job = email_queue.enqueue(
-                send_email_task,
-                order_data=order_data,
-                pdf_filename=pdf_filename,
-                job_timeout=300
-            )
-            print(f"📧 Email task queued with job ID: {email_job.id}")
-            
-            return f"PDF generated successfully: {pdf_filename}"
-        else:
-            raise Exception("Failed to update order state to INVOICE_GENERATED")
-            
-    except Exception as e:
-        print(f"❌ PDF generation failed for order {order_id}: {e}")
-        # Optionally, you might want to set order to failed state here
-        raise e
+
+    print(f"Starting PDF generation for order {order_data.get('order_id', 'unknwon')}")
+    print(f"Order details: {order_data}")
+
+    time.sleep(3)
+
+    pdf_filename=f"order_{order_data.get('order_id'), 'unknown'}.pdf"
+    print(f"PDF generated")
+
+    email_queue = get_email_queue()
+    email_job = email_queue.enqueue(
+        send_email_task,
+        order_data=order_data,
+        pdf_filename=pdf_filename,
+        job_timeout=300
+    )
 
 def send_email_task(order_data: Dict[str, Any], pdf_filename: str) -> bool:
-    """Send email and update order state to EMAIL_SENT"""
-    order_id = order_data.get('order_id', 'unknown')
-    customer_email = order_data.get('customer_email', 'unknown@example.com')
-    
-    print(f"📧 Starting email sending for order: {order_id}")
+
+    print(f"📧 Starting email sending for order: {order_data.get('order_id', 'unknown')}")
     print(f"📎 PDF attachment: {pdf_filename}")
-    print(f"📬 Recipient: {customer_email}")
+    print(f"📬 Recipient: {order_data.get('customer_email', 'unknown@example.com')}")
     
-    try:
-        # Import OrderState here to avoid initialization issues
-        from app.models.order import OrderState
-        
-        # Simulate email sending
-        time.sleep(2)
-        print(f"✅ Email sent successfully to {customer_email}")
-        
-        # Update order state to EMAIL_SENT
-        if update_order_state(order_id, OrderState.EMAIL_SENT):
-            print(f"🎉 Order {order_id} processing completed! State: EMAIL_SENT")
-            return True
-        else:
-            raise Exception("Failed to update order state to EMAIL_SENT")
-            
-    except Exception as e:
-        print(f"❌ Email sending failed for order {order_id}: {e}")
-        # Optionally, you might want to set order to failed state here
-        raise e
+    time.sleep(2)
+    
+    print(f"✅ Email sent successfully to {order_data.get('customer_email', 'unknown@example.com')}")
+    print(f"🎉 Order {order_data.get('order_id', 'unknown')} processing completed!")
+    
+    return True
