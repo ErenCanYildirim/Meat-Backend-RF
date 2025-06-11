@@ -156,7 +156,9 @@ async def place_order(
         order_data = {
             "order_id": db_order.id,
             "user_email": db_order.user_email,
-            "order_date": db_order.order_date.isoformat() if db_order.order_date else None,
+            "order_date": (
+                db_order.order_date.isoformat() if db_order.order_date else None
+            ),
             "state": db_order.state,
             "customer_name": db_order.user.company_name if db_order.user else "Unknown",
             "customer_email": db_order.user_email,
@@ -165,20 +167,22 @@ async def place_order(
                     "id": item.id,
                     "product_id": item.product_id,
                     "quantity": item.quantity,
-                    "product_description": item.product.description if item.product else "Unknown Product",
-                    "product_category": item.product.category if item.product else "Unknown Category"
+                    "product_description": (
+                        item.product.description if item.product else "Unknown Product"
+                    ),
+                    "product_category": (
+                        item.product.category if item.product else "Unknown Category"
+                    ),
                 }
                 for item in db_order.order_items
-            ]
+            ],
         }
 
         print(f"New order created in database: {db_order.id}")
-        
+
         pdf_queue = get_pdf_queue()
         pdf_job = pdf_queue.enqueue(
-            generate_pdf_task, 
-            order_data=order_data,
-            job_timeout=600 
+            generate_pdf_task, order_data=order_data, job_timeout=600
         )
 
         print(f"PDF generation task queued with job ID: {pdf_job.id}")
@@ -216,12 +220,11 @@ async def place_order(
             ),
             "queue_info": {
                 "pdf_job_id": pdf_job.id,
-                "message": "PDF generation and email sending have been queued."
-            }
+                "message": "PDF generation and email sending have been queued.",
+            },
         }
-        
-        return response_data
 
+        return response_data
 
     except Exception as e:
         raise HTTPException(
