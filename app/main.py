@@ -19,6 +19,8 @@ from contextlib import asynccontextmanager
 import sys
 from app.config.init_products import initialize_products
 
+from app.config.redis_config import get_redis_connection
+
 # app.add_middleware(InMemoryRateLimiter, login_limit=(5,60), general_limit=(20,60))
 
 
@@ -54,8 +56,20 @@ def read_root():
 
 @app.get("/health", tags=["Health"])
 async def health_check():
-    return JSONResponse(content={"status": "ok"})
-
+    #return JSONResponse(content={"status": "ok"})
+    try:
+        redis_conn = get_redis_connection()
+        redis_conn.ping()
+        return {
+            "status": "healthy",
+            "database": "connected",
+            "redis": "connected"
+        }
+    except Exception as e:
+        return {
+            "status": "unhealthy",
+            "error": str(e)
+        }
 
 app.include_router(user_router.router)
 app.include_router(auth_router.router)

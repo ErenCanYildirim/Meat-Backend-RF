@@ -14,6 +14,15 @@ services:
     networks:
       - grunland_network
  
+  redis:
+    image: redis:7-alpine
+    container_name: grunland_redis
+    ports:
+      - "6379:6379"
+    restart: unless-stopped
+    networks:
+      - grunland_network
+
   fastapi-app:
     build: .
     container_name: grunland_fastapi
@@ -22,14 +31,45 @@ services:
     environment:
       - ENVIRONMENT=docker
       - DATABASE_URL=postgresql://admin:alphabet@db:5432/grunland_db
+      - REDIS_URL=redis://redis:6379
     volumes:
       - ./app:/app/app
     depends_on:
       - db
+      - redis
     restart: unless-stopped
     networks:
       - grunland_network
 
+  worker:
+    build: .
+    container_name: grunland_worker
+    command: python -m app.services.worker
+    environment:
+      - ENVIRONMENT=docker
+      - DATABASE_URL=postgresql://admin:alphabet@db:5432/grunland_db
+      - REDIS_URL=redis://redis:6379
+    volumes:
+      - ./app:/app/app
+    depends_on:
+      - db
+      - redis
+    restart: unless-stopped
+    networks:
+      - grunland_network
+
+  rq-dashboard:
+    image: eoranged/rq-dashboard
+    container_name: grunland_rq_dashboard
+    ports:
+      - "9181:9181"
+    environment:
+      - RQ_DASHBOARD_REDIS_URL=redis://redis:6379
+    depends_on:
+      - redis 
+    networks:
+      - grunland_network
+      
 volumes:
   postgres_data:
 
