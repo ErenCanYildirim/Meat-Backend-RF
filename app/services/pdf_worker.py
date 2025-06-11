@@ -3,6 +3,7 @@ import os
 from rq import Worker
 from app.config.redis_config import get_redis_connection, get_pdf_queue
 
+
 def main():
     print(f"Starting PDF Worker")
     try:
@@ -18,6 +19,7 @@ def main():
     except Exception as e:
         print(f"PDF Worker error: {e}")
         sys.exit(1)
+
 
 if __name__ == "__main__":
     main()
