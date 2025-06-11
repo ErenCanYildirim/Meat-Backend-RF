@@ -1,0 +1,69 @@
+services:
+  db:
+    image: postgres:15-alpine
+    container_name: grunland_postgres
+    environment:
+      POSTGRES_DB: grunland_db
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: alphabet
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
+    networks:
+      - grunland_network 
+  
+  fastapi-app:
+    build: .
+    container_name: grunland_fastapi
+    ports:
+      - "8000:8000"
+    environment:
+      - ENVIRONMENT=docker
+      - DATABASE_URL=postgresql://admin:alphabet@db:5432/grunland_db
+    volumes:
+      - ./app:/app/app
+    depends_on:
+      - db
+    restart: unless-stopped
+    networks:
+      - grunland_network
+
+  locust-master:
+    image: locustio/locust:2.17.0
+    profiles: ["testing"]
+    ports:
+      - "8089:8089"
+    volumes:
+      - ./app/load_tests:/mnt/locust
+    command: -f /mnt/locust/locustfile.py --master --host=http://fastapi-app:8000
+    environment:
+      - LOCUST_HOST=http://fastapi-app:8000
+    depends_on:
+      - fastapi-app
+    networks:
+      - grunland_network
+  
+  locust-worker:
+    image: locustio/locust:2.17.0
+    profiles: ["testing"]
+    volumes:
+      - ./app/load_tests:/mnt/locust
+    command: -f /mnt/locust/locustfile.py --worker --master-host=locust-master
+    environment:
+      - LOCUST_HOST=http://fastapi-app:8000
+    depends_on:
+      - locust-master
+      - fastapi-app
+    deploy:
+      replicas: 2  
+    networks:
+      - grunland_network
+
+volumes:
+  postgres_data:
+
+networks:
+  grunland_network:
+    driver: bridge

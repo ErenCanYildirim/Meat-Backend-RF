@@ -40,7 +40,7 @@ router = APIRouter(prefix="/products", tags=["Products"])
 
 
 @router.get("/", response_model=List[ProductResponse])
-def get_all_products(
+async def get_all_products(
     category: Optional[ProductCategory] = Query(None, description="Filter by category"),
     db: Session = Depends(get_db),
 ):
@@ -55,7 +55,7 @@ def get_all_products(
 
 
 @router.get("/{product_id}", response_model=ProductResponse)
-def get_product_by_id(product_id: int, db: Session = Depends(get_db)):
+async def get_product_by_id(product_id: int, db: Session = Depends(get_db)):
     try:
         product = crud.product.get_product(db, product_id=product_id)
         if product is None:
@@ -76,7 +76,7 @@ def get_product_by_id(product_id: int, db: Session = Depends(get_db)):
     status_code=status.HTTP_201_CREATED,
     dependencies=[Depends(require_admin)],
 )
-def create_product(
+async def create_product(
     description: str = Form(..., min_length=1, max_length=100),
     category: ProductCategory = Form(...),
     image: Optional[UploadFile] = File(None),
@@ -113,7 +113,7 @@ def create_product(
     response_model=ProductResponse,
     dependencies=[Depends(require_admin)],
 )
-def update_product(
+async def update_product(
     product_id: int,
     description: Optional[str] = Form(
         None, min_length=MIN_DESCRIPTION_LENGTH, max_length=MAX_DESCRIPTION_LENGTH
@@ -194,7 +194,7 @@ def update_product(
     status_code=status.HTTP_204_NO_CONTENT,
     dependencies=[Depends(require_admin)],
 )
-def delete_product(
+async def delete_product(
     product_id: int,
     db: Session = Depends(get_db),
 ):
@@ -218,7 +218,7 @@ def delete_product(
 
 
 @router.post("/{product_id}/image", dependencies=[Depends(require_admin)])
-def upload_product_image(
+async def upload_product_image(
     product_id: int, image: UploadFile = File(...), db: Session = Depends(get_db)
 ):
     validate_image_file(image)
@@ -274,7 +274,7 @@ def upload_product_image(
 
 
 @router.delete("/{product_id}/image", dependencies=[Depends(require_admin)])
-def delete_product_image_only(
+async def delete_product_image_only(
     product_id: int,
     db: Session = Depends(get_db),
 ):
