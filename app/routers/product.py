@@ -34,6 +34,8 @@ from app.core.file_utils import (
 )
 
 
+from app.auth.dependencies import require_admin
+
 router = APIRouter(prefix="/products", tags=["Products"])
 
 

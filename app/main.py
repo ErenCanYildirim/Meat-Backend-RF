@@ -42,7 +42,7 @@ async def lifespan(app: FastAPI):
     print("Application shutdown complete!")
 
 
-app = FastAPI(title="Grundland API", lifespan=lifespan)
+app = FastAPI(title="Grunland API", lifespan=lifespan)
 
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
 

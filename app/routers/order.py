@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Request, Query
 from sqlalchemy.orm import Session
-from datetime import date
+from datetime import date, datetime
 from typing import List
 
 from app.config.database import get_db
@@ -14,9 +14,11 @@ from app.auth.dependencies import require_admin
 router = APIRouter(prefix="/orders", tags=["Orders"])
 
 
-@router.get("/user/{user_email}", 
-            response_model=List[OrderResponse],
-            dependencies=[Depends(require_admin())])
+@router.get(
+    "/user/{user_email}",
+    response_model=List[OrderResponse],
+    dependencies=[Depends(require_admin())],
+)
 async def get_orders_by_email(
     user_email: str,
     skip: int = Query(0, ge=0),
@@ -66,9 +68,11 @@ async def get_orders_by_email(
     return response_orders
 
 
-@router.get("/date/{order_date}", 
-            response_model=List[OrderResponse],
-            dependencies=[Depends(require_admin())])
+@router.get(
+    "/date/{order_date}",
+    response_model=List[OrderResponse],
+    dependencies=[Depends(require_admin())],
+)
 async def get_orders_by_date(
     order_date: date,
     skip: int = Query(0, ge=0),
@@ -120,9 +124,11 @@ async def get_orders_by_date(
 
 
 @router.get("/{order_id}/status", dependencies=[Depends(require_admin())])
-async def get_order_status(order_id: int, 
-                           db: Session = Depends(get_db),
-                           dependencies=[Depends(require_admin())]):
+async def get_order_status(
+    order_id: int,
+    db: Session = Depends(get_db),
+    dependencies=[Depends(require_admin())],
+):
     order = order_crud.get_order_by_id(db=db, order_id=order_id)
     if not order:
         raise HTTPException(
