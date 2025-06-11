@@ -13,6 +13,7 @@ from sqlalchemy.orm import Session
 from app.crud.user import get_user_by_email
 from app.auth.core import get_password_hash
 from app.crud.roles import get_role_by_name
+from app.models.order import Order
 
 router = APIRouter(prefix="/admin", tags=["Admin"])
 
@@ -207,7 +208,16 @@ async def change_user_email(
             detail="Email address is already in use",
         )
 
-    user.email = request.new_email
-    db.commit()
+    try:
+        old_email = user.email
+        user.email = request.new_email
+
+        db.query(Order).filter(Order.user_email == old_email).update(
+            {Order.user_email: request.new_email}
+        )
+        db.commit()
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail="Internal server error")
 
     return {"message": f"Email changed from {request.old_email} to {request.new_email}"}
