@@ -5,6 +5,7 @@ from dotenv import load_dotenv
 
 from pydantic import BaseModel, EmailStr, Field
 
+
 class UserLogin(BaseModel):
     email: EmailStr
     password: str
@@ -25,15 +26,14 @@ PLACE_ORDER_ENDPOINT = f"{BASE_URL}/orders/place-order"
 
 def test_place_order_with_auth():
 
-    login_data = UserLogin(
-        email= root_email,
-        password= root_password
-    )
+    login_data = UserLogin(email=root_email, password=root_password)
 
     session = requests.Session()
     try:
         print(f"Loggin in with email: {root_email}")
-        login_response = session.post(f"{BASE_URL}/auth/login", json=login_data.model_dump())
+        login_response = session.post(
+            f"{BASE_URL}/auth/login", json=login_data.model_dump()
+        )
         login_response.raise_for_status()
         login_result = login_response.json()
 
