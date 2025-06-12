@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session
 from app.config.redis_config import get_email_queue
 from app.config.database import get_db
 from app.models.order import Order, OrderState
+from app.services.email_utils import send_email_with_attachment
 
 
 def get_db_session():
@@ -57,16 +58,14 @@ def generate_pdf_task(order_data: Dict[str, Any]) -> str:
 
 
 def send_email_task(order_data: Dict[str, Any], pdf_filename: str) -> bool:
-    print(
-        f"📧 Starting email sending for order: {order_data.get('order_id', 'unknown')}"
-    )
-    print(f"📎 PDF attachment: {pdf_filename}")
-    print(f"📬 Recipient: {order_data.get('customer_email', 'unknown@example.com')}")
+    print(f"Starting email sending for order: {order_data.get('order_id', 'unknown')}")
+    print(f"PDF attachment: {pdf_filename}")
+    print(f"Recipient: {order_data.get('customer_email', 'unknown@example.com')}")
 
     time.sleep(2)
 
     print(
-        f"✅ Email sent successfully to {order_data.get('customer_email', 'unknown@example.com')}"
+        f"Email sent successfully to {order_data.get('customer_email', 'unknown@example.com')}"
     )
 
     order_id = order_data.get("order_id")
@@ -76,3 +75,28 @@ def send_email_task(order_data: Dict[str, Any], pdf_filename: str) -> bool:
     print(f"🎉 Order {order_data.get('order_id', 'unknown')} processing completed!")
 
     return True
+
+
+# Use this in prod later
+def send_email_task_prod(
+    order_data: Dict[str, Any], pdf_filename: str, pdf_path: str
+) -> bool:
+    print(f"Starting email sending for order: {order_data.get('order_id', 'unknown')}")
+    print(f"PDF attachment: {pdf_filename}")
+
+    status_code = send_mail_with_attachment(pdf_filename, pdf_path)
+
+    if status_code == 202:
+        print(
+            f"Email sent successfully to {order_data.get('customer_email', 'unknown@example.com')}"
+        )
+
+        order_id = order_data.get("order_id")
+        if order_id:
+            update_order_state(order_id, OrderState.EMAIL_SENT)
+
+        print(f"Order {order_data.get('order_id', 'unknown')} processing completed!")
+        return True
+    else:
+        print(f"Email failed to send for order {order_data.get('order_id', 'unknown')}")
+        return False
