@@ -9,6 +9,7 @@ from app.routers import auth as auth_router
 from app.routers import admin as admin_router
 from app.routers import product as product_router
 from app.routers import order as order_router
+from app.routers import analytics as analytics_router
 
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.trustedhost import TrustedHostMiddleware
@@ -70,6 +71,7 @@ app.include_router(auth_router.router)
 app.include_router(product_router.router)
 app.include_router(order_router.router)
 app.include_router(admin_router.router)
+app.include_router(analytics_router.router)
 
 app.add_middleware(
     CORSMiddleware,
