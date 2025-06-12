@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 from app.config.redis_config import get_email_queue
 from app.config.database import get_db
 from app.models.order import Order, OrderState
-from app.services.email_utils import send_email_with_attachment
+from app.services.email_utils import send_mail_with_attachment
 
 
 def get_db_session():

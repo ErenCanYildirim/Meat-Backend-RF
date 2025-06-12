@@ -1,5 +1,5 @@
 import base64
-from sendgrid import SendgridAPIClient
+from sendgrid import SendGridAPIClient
 from sendgrid.helpers.mail import (
     Mail,
     Attachment,
