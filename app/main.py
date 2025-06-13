@@ -1,3 +1,4 @@
+import os
 import sys
 from contextlib import asynccontextmanager
 
@@ -10,7 +11,9 @@ from starlette.middleware.trustedhost import TrustedHostMiddleware
 
 from app.config.database import Base, engine, init_database
 from app.config.init_products import initialize_products
+from app.config.logging_config import get_logger, setup_logging
 from app.config.redis_config import get_redis_connection
+from app.middleware.logging_middleware import LoggingMiddleware
 from app.middleware.rate_limit_middleware import RateLimitMiddleware
 from app.models.user import Role, User
 from app.routers import admin as admin_router
@@ -19,6 +22,10 @@ from app.routers import auth as auth_router
 from app.routers import order as order_router
 from app.routers import product as product_router
 from app.routers import user as user_router
+
+environment = os.getenv("ENVIRONMENT", "development")
+setup_logging(environment)
+logger = get_logger(__name__)
 
 
 @asynccontextmanager
@@ -47,6 +54,7 @@ app.mount("/static", StaticFiles(directory="app/static"), name="static")
 
 redis_conn = get_redis_connection()
 app.add_middleware(RateLimitMiddleware, redis_connection=redis_conn)
+app.add_middleware(LoggingMiddleware)
 
 
 @app.get("/")

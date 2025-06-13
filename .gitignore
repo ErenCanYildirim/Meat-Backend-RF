@@ -1,5 +1,6 @@
 #Folder
 scripts/
+logs/
 
 # Python
 __pycache__/
