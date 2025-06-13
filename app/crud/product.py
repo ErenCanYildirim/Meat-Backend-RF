@@ -6,12 +6,8 @@ from sqlalchemy.orm import Session
 
 from app.core.file_utils import delete_product_image, save_product_image
 from app.models.product import Product, ProductCategory
-from app.schemas.product import (
-    ProductBase,
-    ProductCreate,
-    ProductResponse,
-    ProductUpdate,
-)
+from app.schemas.product import (ProductBase, ProductCreate, ProductResponse,
+                                 ProductUpdate)
 
 
 def get_product(db: Session, product_id: int) -> Optional[Product]:

@@ -96,7 +96,8 @@ def drop_tables():
 
 def create_root_admin(db: Session):
     from app.crud.roles import assign_role_to_user, get_role_by_name
-    from app.crud.user import create_user_with_hashed_password, get_user_by_email
+    from app.crud.user import (create_user_with_hashed_password,
+                               get_user_by_email)
     from app.schemas.user import UserCreate
 
     admin_email = os.getenv("ROOT_ADMIN_EMAIL")

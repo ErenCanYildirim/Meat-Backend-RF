@@ -2,11 +2,12 @@ import os
 import sys
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
+from prometheus_client import CONTENT_TYPE_LATEST, generate_latest
 from starlette.middleware.trustedhost import TrustedHostMiddleware
 
 from app.config.database import Base, engine, init_database
@@ -14,6 +15,7 @@ from app.config.init_products import initialize_products
 from app.config.logging_config import get_logger, setup_logging
 from app.config.redis_config import get_redis_connection
 from app.middleware.logging_middleware import LoggingMiddleware
+from app.middleware.prometheus_middleware import PrometheusMiddleware
 from app.middleware.rate_limit_middleware import RateLimitMiddleware
 from app.models.user import Role, User
 from app.routers import admin as admin_router
@@ -55,6 +57,7 @@ app.mount("/static", StaticFiles(directory="app/static"), name="static")
 redis_conn = get_redis_connection()
 app.add_middleware(RateLimitMiddleware, redis_connection=redis_conn)
 app.add_middleware(LoggingMiddleware)
+app.add_middleware(PrometheusMiddleware)
 
 
 @app.get("/")
@@ -71,6 +74,11 @@ async def health_check():
         return {"status": "healthy", "database": "connected", "redis": "connected"}
     except Exception as e:
         return {"status": "unhealthy", "error": str(e)}
+
+
+@app.get("/metrics", tags=["Monitoring"])
+async def get_metrics():
+    return Response(generate_latest(), media_type=CONTENT_TYPE_LATEST)
 
 
 app.include_router(user_router.router)

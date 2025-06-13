@@ -329,7 +329,8 @@ class TestImports:
     def test_fastapi_imports(self):
         """Test FastAPI imports"""
         try:
-            from fastapi import APIRouter, Depends, HTTPException, Request, status
+            from fastapi import (APIRouter, Depends, HTTPException, Request,
+                                 status)
 
             assert True
         except ImportError as e:

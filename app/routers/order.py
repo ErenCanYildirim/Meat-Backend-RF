@@ -9,6 +9,7 @@ from app.auth.dependencies import require_admin
 from app.config.database import get_db
 from app.config.redis_config import get_pdf_queue
 from app.crud import order as order_crud
+from app.middleware.prometheus_middleware import record_order_created
 from app.models.order import OrderState
 from app.schemas.order import OrderCreate, OrderResponse, OrderStateUpdate
 from app.services.tasks import generate_pdf_task
@@ -222,6 +223,8 @@ async def place_order(
                 "message": "PDF generation and email sending have been queued.",
             },
         }
+
+        record_order_created()  # Prometheus metrics
 
         return response_data
 

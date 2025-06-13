@@ -6,6 +6,8 @@ from sqlalchemy.orm import Session
 
 from app.config.database import get_db
 from app.config.redis_config import get_email_queue
+from app.middleware.prometheus_middleware import (record_email_sent,
+                                                  record_pdf_processing_time)
 from app.models.order import Order, OrderState
 from app.services.email_utils import send_mail_with_attachment
 
@@ -38,6 +40,8 @@ def update_order_state(order_id: int, new_state: OrderState):
 def generate_pdf_task(order_data: Dict[str, Any]) -> str:
     print(f"Starting PDF generation for order {order_data.get('order_id', 'unknown')}")
     print(f"Order details: {order_data}")
+    start_time = time.time()
+    order_id = order_data.get("order_id", "unknown")
 
     time.sleep(3)
 
@@ -47,6 +51,9 @@ def generate_pdf_task(order_data: Dict[str, Any]) -> str:
     order_id = order_data.get("order_id")
     if order_id:
         update_order_state(order_id, OrderState.INVOICE_GENERATED)
+
+    duration = time.time() - start_time
+    record_pdf_processing_time(duration)
 
     email_queue = get_email_queue()
     email_job = email_queue.enqueue(
@@ -98,7 +105,11 @@ def send_email_task_prod(
             update_order_state(order_id, OrderState.EMAIL_SENT)
 
         print(f"Order {order_data.get('order_id', 'unknown')} processing completed!")
+
+        record_email_sent("order_confirmation", "success")
         return True
     else:
         print(f"Email failed to send for order {order_data.get('order_id', 'unknown')}")
+
+        record_email_sent("order_confirmation", "failed")
         return False

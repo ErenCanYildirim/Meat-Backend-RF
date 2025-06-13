@@ -1,26 +1,20 @@
 from datetime import timedelta
 from uuid import uuid4
 
-from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
+from fastapi import (APIRouter, Depends, HTTPException, Request, Response,
+                     status)
 from sqlalchemy.orm import Session
 
-from app.auth.core import (
-    ACCESS_TOKEN_EXPIRE_DAYS,
-    COOKIE_NAME,
-    authenticate_user,
-    create_access_token,
-    get_current_user,
-    get_password_hash,
-)
-from app.auth.pw_reset import generate_reset_token, hash_password, verify_password
+from app.auth.core import (ACCESS_TOKEN_EXPIRE_DAYS, COOKIE_NAME,
+                           authenticate_user, create_access_token,
+                           get_current_user, get_password_hash)
+from app.auth.pw_reset import (generate_reset_token, hash_password,
+                               verify_password)
 from app.config.database import get_db
 from app.crud.roles import assign_default_customer_role
-from app.crud.user import (
-    create_user_with_hashed_password,
-    get_user,
-    get_user_by_company_name,
-    get_user_by_email,
-)
+from app.crud.user import (create_user_with_hashed_password, get_user,
+                           get_user_by_company_name, get_user_by_email)
+from app.middleware.prometheus_middleware import record_user_registration
 from app.models.password_reset import PasswordResetToken
 from app.models.user import User
 from app.schemas.password import ForgotPasswordRequest, ResetPasswordRequest
@@ -64,6 +58,8 @@ async def register(
         samesite="lax",
         max_age=ACCESS_TOKEN_EXPIRE_DAYS * 3600,
     )
+
+    record_user_registration()  # Prometheus client
 
     return {
         "user": {

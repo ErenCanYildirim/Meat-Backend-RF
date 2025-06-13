@@ -6,14 +6,12 @@ from sqlalchemy.orm import Session
 from app.auth.dependencies import require_admin
 from app.config.database import get_db
 from app.crud import analytics as analytics_crud
-from app.schemas.analytics import (
-    AverageQuantityOut,
-    CustomerOrderFrequencyOut,
-    CustomerQuantityOut,
-    OrderTimeDistributionOut,
-    ProductOrderFrequencyOut,
-    ProductQuantityOut,
-)
+from app.schemas.analytics import (AverageQuantityOut,
+                                   CustomerOrderFrequencyOut,
+                                   CustomerQuantityOut,
+                                   OrderTimeDistributionOut,
+                                   ProductOrderFrequencyOut,
+                                   ProductQuantityOut)
 
 router = APIRouter(prefix="/analytics", tags=["Analytics"])
 
