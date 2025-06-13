@@ -7,8 +7,7 @@ from app import crud
 from app.auth.dependencies import require_admin
 from app.config.database import get_db
 from app.models.user import User
-from app.schemas.user import (UserCreate, UserCreateWithRoles, UserRead,
-                              UserUpdate)
+from app.schemas.user import UserCreate, UserCreateWithRoles, UserRead, UserUpdate
 
 router = APIRouter(prefix="/users", tags=["Users"])
 

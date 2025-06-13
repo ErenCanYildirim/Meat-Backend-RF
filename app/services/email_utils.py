@@ -4,8 +4,14 @@ import os
 from dotenv import load_dotenv
 from python_http_client.exceptions import HTTPError
 from sendgrid import SendGridAPIClient
-from sendgrid.helpers.mail import (Attachment, Disposition, FileContent,
-                                   FileName, FileType, Mail)
+from sendgrid.helpers.mail import (
+    Attachment,
+    Disposition,
+    FileContent,
+    FileName,
+    FileType,
+    Mail,
+)
 
 load_dotenv()
 

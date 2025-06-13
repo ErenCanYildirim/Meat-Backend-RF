@@ -1,19 +1,37 @@
 from typing import List, Optional
 
-from fastapi import (APIRouter, Depends, File, Form, HTTPException, Query,
-                     UploadFile, status)
+from fastapi import (
+    APIRouter,
+    Depends,
+    File,
+    Form,
+    HTTPException,
+    Query,
+    UploadFile,
+    status,
+)
 from sqlalchemy.orm import Session
 
 from app import crud
 from app.auth.dependencies import require_admin
 from app.config.database import get_db
-from app.core.file_utils import (ALLOWED_IMAGE_TYPES, MAX_DESCRIPTION_LENGTH,
-                                 MAX_IMAGE_SIZE, MIN_DESCRIPTION_LENGTH,
-                                 delete_product_image, handle_database_error,
-                                 save_product_image, validate_image_file)
+from app.core.file_utils import (
+    ALLOWED_IMAGE_TYPES,
+    MAX_DESCRIPTION_LENGTH,
+    MAX_IMAGE_SIZE,
+    MIN_DESCRIPTION_LENGTH,
+    delete_product_image,
+    handle_database_error,
+    save_product_image,
+    validate_image_file,
+)
 from app.models.product import Product, ProductCategory
-from app.schemas.product import (ProductBase, ProductCreate, ProductResponse,
-                                 ProductUpdate)
+from app.schemas.product import (
+    ProductBase,
+    ProductCreate,
+    ProductResponse,
+    ProductUpdate,
+)
 
 router = APIRouter(prefix="/products", tags=["Products"])
 

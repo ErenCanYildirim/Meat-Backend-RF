@@ -2,14 +2,17 @@ from fastapi import APIRouter, Depends, HTTPException, Request, status
 from sqlalchemy.orm import Session
 
 from app.auth.core import get_current_user, get_password_hash
-from app.auth.dependencies import (require_admin, require_customer,
-                                   require_manager)
+from app.auth.dependencies import require_admin, require_customer, require_manager
 from app.config.database import get_db
 from app.crud.roles import get_role_by_name
 from app.crud.user import get_user_by_email
 from app.models.order import Order
-from app.schemas.admin import (ChangeCompanyNameRequest, ChangePasswordRequest,
-                               ChangeUserEmailRequest, ChangeUserRoleRequest)
+from app.schemas.admin import (
+    ChangeCompanyNameRequest,
+    ChangePasswordRequest,
+    ChangeUserEmailRequest,
+    ChangeUserRoleRequest,
+)
 
 router = APIRouter(prefix="/admin", tags=["Admin"])
 

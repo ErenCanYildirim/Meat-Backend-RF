@@ -3,8 +3,7 @@ import sys
 
 from rq import Worker
 
-from app.config.redis_config import (get_email_queue, get_pdf_queue,
-                                     get_redis_connection)
+from app.config.redis_config import get_email_queue, get_pdf_queue, get_redis_connection
 
 """
 def main():
