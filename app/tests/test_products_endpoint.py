@@ -1,6 +1,7 @@
-import requests
 import time
 from enum import Enum
+
+import requests
 
 
 class ProductCategory(str, Enum):

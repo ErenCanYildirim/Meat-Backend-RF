@@ -1,17 +1,16 @@
-from fastapi import APIRouter, Depends, HTTPException, status, Request, Query
-from sqlalchemy.orm import Session
 from datetime import date, datetime
 from typing import List
 
-from app.config.database import get_db
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
+from sqlalchemy.orm import Session
+
 from app.auth.core import get_current_user
-from app.crud import order as order_crud
-from app.schemas.order import OrderCreate, OrderResponse, OrderStateUpdate
-from app.models.order import OrderState
-
 from app.auth.dependencies import require_admin
-
+from app.config.database import get_db
 from app.config.redis_config import get_pdf_queue
+from app.crud import order as order_crud
+from app.models.order import OrderState
+from app.schemas.order import OrderCreate, OrderResponse, OrderStateUpdate
 from app.services.tasks import generate_pdf_task
 
 router = APIRouter(prefix="/orders", tags=["Orders"])

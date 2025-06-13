@@ -1,7 +1,9 @@
 import time
+
 import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
+
 from app.middleware.rate_limiter import InMemoryRateLimiter
 
 # A new test client will be provided, as the ip is shared here

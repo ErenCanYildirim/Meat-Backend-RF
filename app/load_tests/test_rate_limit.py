@@ -1,18 +1,20 @@
-import sys
 import os
+import sys
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../..")))
 
 # NOTE: the above code seems to be necessary to ensure that this test_file can find
 # the app.middleware folder, else there is some import issue => Is there another way?
 
+import time
+
 import pytest
 import redis
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
+
 from app.middleware.rate_limit_middleware import RateLimitMiddleware
-from app.middleware.rate_limiter import RedisRateLimiter, RateLimitConfig
-import time
+from app.middleware.rate_limiter import RateLimitConfig, RedisRateLimiter
 
 """
     Test strategy:

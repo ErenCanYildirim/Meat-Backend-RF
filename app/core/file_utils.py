@@ -2,10 +2,12 @@ import os
 import uuid
 from pathlib import Path
 from typing import Optional
-from fastapi import UploadFile, HTTPException, status
-from app.models.product import ProductCategory
-from sqlalchemy.orm import Session
+
+from fastapi import HTTPException, UploadFile, status
 from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.orm import Session
+
+from app.models.product import ProductCategory
 
 MAX_DESCRIPTION_LENGTH = 100
 MIN_DESCRIPTION_LENGTH = 1

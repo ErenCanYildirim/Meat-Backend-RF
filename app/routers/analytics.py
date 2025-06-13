@@ -1,20 +1,17 @@
-from fastapi import APIRouter, Depends, HTTPException, status, Request, Query
-from sqlalchemy.orm import Session
 from typing import List
 
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
+from sqlalchemy.orm import Session
+
+from app.auth.dependencies import require_admin
 from app.config.database import get_db
 from app.crud import analytics as analytics_crud
-from app.auth.dependencies import require_admin
-
-from app.schemas.analytics import (
-    ProductQuantityOut,
-    AverageQuantityOut,
-    ProductOrderFrequencyOut,
-    CustomerQuantityOut,
-    CustomerOrderFrequencyOut,
-    OrderTimeDistributionOut,
-)
-
+from app.schemas.analytics import (AverageQuantityOut,
+                                   CustomerOrderFrequencyOut,
+                                   CustomerQuantityOut,
+                                   OrderTimeDistributionOut,
+                                   ProductOrderFrequencyOut,
+                                   ProductQuantityOut)
 
 router = APIRouter(prefix="/analytics", tags=["Analytics"])
 

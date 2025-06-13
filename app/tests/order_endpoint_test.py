@@ -1,8 +1,8 @@
-import requests
 import json
 import os
-from dotenv import load_dotenv
 
+import requests
+from dotenv import load_dotenv
 from pydantic import BaseModel, EmailStr, Field
 
 

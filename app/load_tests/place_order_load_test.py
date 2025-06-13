@@ -1,14 +1,15 @@
 import asyncio
-import aiohttp
 import json
-import time
-import statistics
-from dataclasses import dataclass
-from typing import List, Dict, Any
-import random
-from datetime import datetime
-from dotenv import load_dotenv
 import os
+import random
+import statistics
+import time
+from dataclasses import dataclass
+from datetime import datetime
+from typing import Any, Dict, List
+
+import aiohttp
+from dotenv import load_dotenv
 from pydantic import BaseModel, EmailStr, Field
 
 load_dotenv()

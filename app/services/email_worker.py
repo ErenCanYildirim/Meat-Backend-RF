@@ -1,7 +1,9 @@
-import sys
 import os
+import sys
+
 from rq import Worker
-from app.config.redis_config import get_redis_connection, get_email_queue
+
+from app.config.redis_config import get_email_queue, get_redis_connection
 
 
 def main():

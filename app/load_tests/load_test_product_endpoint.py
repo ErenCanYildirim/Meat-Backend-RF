@@ -1,11 +1,12 @@
-import requests
-import time
-import threading
 import random
-from enum import Enum
-from concurrent.futures import ThreadPoolExecutor, as_completed
-from collections import defaultdict
 import statistics
+import threading
+import time
+from collections import defaultdict
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from enum import Enum
+
+import requests
 
 
 class ProductCategory(str, Enum):

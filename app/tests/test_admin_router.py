@@ -1,7 +1,8 @@
+from unittest.mock import MagicMock, Mock, patch
+
 import pytest
+from fastapi import Depends, FastAPI, HTTPException, status
 from fastapi.testclient import TestClient
-from fastapi import FastAPI, Depends, HTTPException, status
-from unittest.mock import Mock, patch, MagicMock
 
 
 # Mock user class for testing
@@ -328,7 +329,8 @@ class TestImports:
     def test_fastapi_imports(self):
         """Test FastAPI imports"""
         try:
-            from fastapi import APIRouter, Depends, HTTPException, Request, status
+            from fastapi import (APIRouter, Depends, HTTPException, Request,
+                                 status)
 
             assert True
         except ImportError as e:

@@ -1,15 +1,13 @@
-from fastapi import UploadFile
-from sqlalchemy.orm import Session
-from sqlalchemy import desc
 from typing import List, Optional
+
+from fastapi import UploadFile
+from sqlalchemy import desc
+from sqlalchemy.orm import Session
+
+from app.core.file_utils import delete_product_image, save_product_image
 from app.models.product import Product, ProductCategory
-from app.schemas.product import (
-    ProductBase,
-    ProductCreate,
-    ProductUpdate,
-    ProductResponse,
-)
-from app.core.file_utils import save_product_image, delete_product_image
+from app.schemas.product import (ProductBase, ProductCreate, ProductResponse,
+                                 ProductUpdate)
 
 
 def get_product(db: Session, product_id: int) -> Optional[Product]:

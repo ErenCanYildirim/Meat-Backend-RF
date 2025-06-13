@@ -1,8 +1,9 @@
-from locust import HttpUser, task, between
+import json
 import random
 import string
-import json
 from datetime import datetime
+
+from locust import HttpUser, between, task
 
 
 class AuthUser(HttpUser):

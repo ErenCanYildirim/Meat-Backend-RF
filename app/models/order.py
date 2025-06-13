@@ -1,18 +1,13 @@
-from sqlalchemy import (
-    Column,
-    Integer,
-    String,
-    DateTime,
-    ForeignKey,
-    Enum as SQLEnum,
-    UUID,
-)
-from sqlalchemy.orm import relationship
-from sqlalchemy.sql import func
 from datetime import datetime
 from enum import Enum
-from uuid import UUID as PyUUID
 from typing import List, Optional
+from uuid import UUID as PyUUID
+
+from sqlalchemy import UUID, Column, DateTime
+from sqlalchemy import Enum as SQLEnum
+from sqlalchemy import ForeignKey, Integer, String
+from sqlalchemy.orm import relationship
+from sqlalchemy.sql import func
 
 from app.models.base import Base
 

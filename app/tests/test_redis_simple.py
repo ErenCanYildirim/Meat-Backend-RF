@@ -1,5 +1,5 @@
-import sys
 import os
+import sys
 import time
 
 # Test queue functionality directly
@@ -92,6 +92,7 @@ def check_job_status(job_id):
 
     try:
         from rq.job import Job
+
         from app.config.redis_config import get_redis_connection
 
         redis_conn = get_redis_connection()
@@ -118,7 +119,7 @@ def check_queue_lengths():
     print("\n📊 Checking queue lengths...")
 
     try:
-        from app.config.redis_config import get_pdf_queue, get_email_queue
+        from app.config.redis_config import get_email_queue, get_pdf_queue
 
         pdf_queue = get_pdf_queue()
         email_queue = get_email_queue()

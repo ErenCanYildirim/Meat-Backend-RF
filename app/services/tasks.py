@@ -1,9 +1,11 @@
 import time
-from typing import Dict, Any
 from enum import Enum
+from typing import Any, Dict
+
 from sqlalchemy.orm import Session
-from app.config.redis_config import get_email_queue
+
 from app.config.database import get_db
+from app.config.redis_config import get_email_queue
 from app.models.order import Order, OrderState
 from app.services.email_utils import send_mail_with_attachment
 

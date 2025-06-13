@@ -1,10 +1,12 @@
+from typing import List
+
+import jwt
 from fastapi import Depends, HTTPException, Request, status
 from sqlalchemy.orm import Session
-from typing import List
+
+from app.auth.core import ALGORITHM, COOKIE_NAME, SECRET_KEY
 from app.config.database import get_db
 from app.models.user import UserRoleEnum
-import jwt
-from app.auth.core import SECRET_KEY, ALGORITHM, COOKIE_NAME
 
 
 class RoleChecker:

@@ -1,7 +1,9 @@
-from sqlalchemy.orm import Session
-from app.models.user import Role, User, UserRoleEnum
 from uuid import uuid4
+
 from sqlalchemy import func
+from sqlalchemy.orm import Session
+
+from app.models.user import Role, User, UserRoleEnum
 
 
 def get_role_by_name(db: Session, role_name: str) -> Role:

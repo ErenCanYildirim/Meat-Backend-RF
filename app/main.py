@@ -1,26 +1,24 @@
+import sys
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
-from app.config.database import engine, Base
-from app.models.user import Role, User
-
-from app.routers import user as user_router
-from app.routers import auth as auth_router
-from app.routers import admin as admin_router
-from app.routers import product as product_router
-from app.routers import order as order_router
-from app.routers import analytics as analytics_router
-
-from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.trustedhost import TrustedHostMiddleware
-from fastapi.middleware.gzip import GZipMiddleware
-from app.config.database import init_database
-from contextlib import asynccontextmanager
-import sys
-from app.config.init_products import initialize_products
 
+from app.config.database import Base, engine, init_database
+from app.config.init_products import initialize_products
 from app.config.redis_config import get_redis_connection
 from app.middleware.rate_limit_middleware import RateLimitMiddleware
+from app.models.user import Role, User
+from app.routers import admin as admin_router
+from app.routers import analytics as analytics_router
+from app.routers import auth as auth_router
+from app.routers import order as order_router
+from app.routers import product as product_router
+from app.routers import user as user_router
 
 
 @asynccontextmanager

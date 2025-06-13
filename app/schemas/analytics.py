@@ -1,6 +1,7 @@
-from pydantic import BaseModel, EmailStr
-from typing import List
 from datetime import date
+from typing import List
+
+from pydantic import BaseModel, EmailStr
 
 
 class ProductQuantityOut(BaseModel):

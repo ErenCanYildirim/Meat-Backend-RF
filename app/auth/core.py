@@ -1,20 +1,19 @@
-from fastapi import HTTPException, Depends, Response, Request, status
+import os
+from datetime import datetime, timedelta
+from typing import List, Optional
+
+import jwt
+from dotenv import load_dotenv
+from fastapi import Depends, HTTPException, Request, Response, status
 from fastapi.security import OAuth2PasswordBearer
 from passlib.context import CryptContext
-from datetime import datetime, timedelta
-import jwt
-from typing import List, Optional
-from app.config.database import get_db
-
-from sqlalchemy.orm import Session
-from app.models import User
 from pydantic import EmailStr
+from sqlalchemy.orm import Session
 
+from app.config.database import get_db
 from app.crud.user import get_user_by_company_name
+from app.models import User
 from app.schemas.user import TokenData
-
-from dotenv import load_dotenv
-import os
 
 load_dotenv()
 

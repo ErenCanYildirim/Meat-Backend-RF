@@ -1,6 +1,8 @@
 import os
 from pathlib import Path
+
 from sqlalchemy.orm import Session
+
 from app.config.database import SessionLocal, engine
 from app.models.base import Base
 from app.models.product import Product, ProductCategory

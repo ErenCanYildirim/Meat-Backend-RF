@@ -12,10 +12,10 @@ def create_test_order():
 
     try:
         from app.config.database import get_db
-        from app.models.order import Order, OrderState
-        from app.models.user import User  # Adjust path as needed
-        from app.models.product import Product  # Adjust path as needed
         from app.models.order import OrderItem  # Adjust path as needed
+        from app.models.order import Order, OrderState
+        from app.models.product import Product  # Adjust path as needed
+        from app.models.user import User  # Adjust path as needed
 
         db = next(get_db())
 

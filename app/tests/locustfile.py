@@ -1,7 +1,8 @@
 import random
 import string
-from locust import HttpUser, task, between
+
 from faker import Faker
+from locust import HttpUser, between, task
 
 fake = Faker()
 

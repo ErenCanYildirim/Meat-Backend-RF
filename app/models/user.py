@@ -1,9 +1,11 @@
-from sqlalchemy import Column, String, Boolean, ForeignKey, Table
-from sqlalchemy.orm import relationship
 from enum import Enum
 
-from .base import Base, TimestampMixin, UUIDMixin
+from sqlalchemy import Boolean, Column, ForeignKey, String, Table
+from sqlalchemy.orm import relationship
+
 from app.models.order import Order
+
+from .base import Base, TimestampMixin, UUIDMixin
 
 __all__ = ["User", "Role", "UserRoleEnum", "user_roles"]
 

@@ -1,16 +1,11 @@
 import base64
-from sendgrid import SendGridAPIClient
-from sendgrid.helpers.mail import (
-    Mail,
-    Attachment,
-    FileContent,
-    FileName,
-    FileType,
-    Disposition,
-)
 import os
+
 from dotenv import load_dotenv
 from python_http_client.exceptions import HTTPError
+from sendgrid import SendGridAPIClient
+from sendgrid.helpers.mail import (Attachment, Disposition, FileContent,
+                                   FileName, FileType, Mail)
 
 load_dotenv()
 

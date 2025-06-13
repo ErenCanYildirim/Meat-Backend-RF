@@ -7,11 +7,11 @@ from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
-from app.main import app
+from app.auth.core import COOKIE_NAME, get_password_hash
 from app.config.database import get_db
+from app.main import app
 from app.models.base import Base
 from app.models.user import User
-from app.auth.core import get_password_hash, COOKIE_NAME
 
 # Suppress deprecation warnings
 warnings.filterwarnings("ignore", category=DeprecationWarning)

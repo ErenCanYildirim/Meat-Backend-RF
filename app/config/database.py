@@ -1,10 +1,11 @@
-from sqlalchemy import create_engine, inspect, text
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker, Session
-from sqlalchemy.pool import StaticPool
 import os
 import time
+
 from dotenv import load_dotenv
+from sqlalchemy import create_engine, inspect, text
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import Session, sessionmaker
+from sqlalchemy.pool import StaticPool
 
 load_dotenv()
 
@@ -94,8 +95,9 @@ def drop_tables():
 
 
 def create_root_admin(db: Session):
-    from app.crud.user import get_user_by_email, create_user_with_hashed_password
-    from app.crud.roles import get_role_by_name, assign_role_to_user
+    from app.crud.roles import assign_role_to_user, get_role_by_name
+    from app.crud.user import (create_user_with_hashed_password,
+                               get_user_by_email)
     from app.schemas.user import UserCreate
 
     admin_email = os.getenv("ROOT_ADMIN_EMAIL")
