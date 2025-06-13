@@ -14,15 +14,13 @@ from app.routers import analytics as analytics_router
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.trustedhost import TrustedHostMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
-from app.middleware.rate_limiter import InMemoryRateLimiter
 from app.config.database import init_database
 from contextlib import asynccontextmanager
 import sys
 from app.config.init_products import initialize_products
 
 from app.config.redis_config import get_redis_connection
-
-# app.add_middleware(InMemoryRateLimiter, login_limit=(5,60), general_limit=(20,60))
+from app.middleware.rate_limit_middleware import RateLimitMiddleware
 
 
 @asynccontextmanager
@@ -48,6 +46,9 @@ async def lifespan(app: FastAPI):
 app = FastAPI(title="Grunland API", lifespan=lifespan)
 
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
+
+redis_conn = get_redis_connection()
+app.add_middleware(RateLimitMiddleware, redis_connection=redis_conn)
 
 
 @app.get("/")
