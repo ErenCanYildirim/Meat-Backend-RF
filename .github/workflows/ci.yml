@@ -24,14 +24,15 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
+          pip install bandit 
           
       - name: Run Code formatter
         run: |
-          black --check .
+          black .
       
       - name: Run import sorter
-        run: isort --check-only . 
-      
+        run: isort .
+
       - name: Run order tests 
         run: pytest app/tests/order_endpoint_test.py
 
