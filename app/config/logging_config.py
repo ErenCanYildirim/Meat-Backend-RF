@@ -51,7 +51,7 @@ def setup_logging(environment: str = "development"):
 
     log_dir = "/app/logs" if environment == "docker" else "logs"
     if not os.path.exists(log_dir):
-        os.makedirs(logs_dir)
+        os.makedirs(log_dir)
 
     file_handler = logging.FileHandler(f"{log_dir}/app.log")
     file_handler.setLevel(log_level)

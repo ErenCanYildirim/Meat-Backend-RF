@@ -3,7 +3,12 @@ import sys
 
 from rq import Worker
 
+from app.config.logging_config import get_logger, setup_logging
 from app.config.redis_config import get_pdf_queue, get_redis_connection
+
+environment = os.getenv("ENVIRONMENT", "development")
+setup_logging(environment)
+logger = get_logger(__name__)
 
 
 def main():

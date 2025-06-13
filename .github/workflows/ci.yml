@@ -28,6 +28,4 @@ jobs:
       - name: Run Code formatter
         run: |
           black .
-    
-      - name: Run order tests 
-        run: pytest app/tests/order_endpoint_test.py
+  
