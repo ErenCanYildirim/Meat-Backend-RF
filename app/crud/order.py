@@ -9,6 +9,11 @@ from app.models.order import Order, OrderItem, OrderState
 from app.schemas.order import OrderCreate, OrderUpdate
 
 
+def get_all_orders(db: Session, skip: int = 0, limit: int = 50) -> List[Order]:
+    orders = db.query(Order).offset(skip).limit(limit).all()
+    return orders
+
+
 def get_orders_by_user_email(
     db: Session, user_email: str, skip: int = 0, limit: int = 10
 ) -> List[Order]:

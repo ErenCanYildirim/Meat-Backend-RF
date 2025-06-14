@@ -82,7 +82,7 @@ class PrometheusMiddleware(BaseHTTPMiddleware):
             return response
 
         except Exception as e:
-            REQUEST_COUNT.labels(method=method, endpoint=path, status_code=500).inc()
+            REQUEST_COUNTS.labels(method=method, endpoint=path, status_code=500).inc()
 
             duration = time.time() - start_time
             REQUEST_DURATION.labels(method=method, endpoint=path).observe(duration)
