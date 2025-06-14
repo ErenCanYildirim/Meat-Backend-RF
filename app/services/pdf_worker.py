@@ -2,13 +2,20 @@ import os
 import sys
 
 from rq import Worker
+from rq.job import Job
 
 from app.config.logging_config import get_logger, setup_logging
-from app.config.redis_config import get_pdf_queue, get_redis_connection
+from app.config.redis_config import (get_pdf_queue, get_redis_connection,
+                                     retry_failed_job)
 
 environment = os.getenv("ENVIRONMENT", "development")
 setup_logging(environment)
 logger = get_logger(__name__)
+
+
+def handle_job_failure(job: Job, *exc_info):
+    print(f"Job {job.id} failed: {exc_info}")
+    retry_failed_job(job.id)
 
 
 def main():
@@ -19,6 +26,8 @@ def main():
         print(f"Listening to PDF queue only")
 
         worker = Worker([pdf_queue], connection=redis_conn)
+        worker.push_exc_handler(handle_job_failure)
+
         print(f"PDF worker is ready and listening")
         worker.work()
     except KeyboardInterrupt:

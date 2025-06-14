@@ -5,7 +5,7 @@ from typing import Any, Dict
 from sqlalchemy.orm import Session
 
 from app.config.database import get_db
-from app.config.redis_config import get_email_queue
+from app.config.redis_config import get_email_queue, retry_failed_job
 from app.middleware.prometheus_middleware import (record_email_sent,
                                                   record_pdf_processing_time)
 from app.models.order import Order, OrderState
@@ -43,27 +43,39 @@ def generate_pdf_task(order_data: Dict[str, Any]) -> str:
     start_time = time.time()
     order_id = order_data.get("order_id", "unknown")
 
-    time.sleep(3)
+    try:
 
-    pdf_filename = f"order_{order_data.get('order_id', 'unknown')}.pdf"
-    print(f"PDF generated: {pdf_filename}")
+        time.sleep(3)
 
-    order_id = order_data.get("order_id")
-    if order_id:
-        update_order_state(order_id, OrderState.INVOICE_GENERATED)
+        pdf_filename = f"order_{order_data.get('order_id', 'unknown')}.pdf"
+        print(f"PDF generated: {pdf_filename}")
 
-    duration = time.time() - start_time
-    record_pdf_processing_time(duration)
+        order_id = order_data.get("order_id")
+        if order_id:
+            update_order_state(order_id, OrderState.INVOICE_GENERATED)
 
-    email_queue = get_email_queue()
-    email_job = email_queue.enqueue(
-        send_email_task,
-        order_data=order_data,
-        pdf_filename=pdf_filename,
-        job_timeout=300,
-    )
+        duration = time.time() - start_time
+        record_pdf_processing_time(duration)
 
-    return pdf_filename
+        email_queue = get_email_queue()
+        email_job = email_queue.enqueue(
+            send_email_task,
+            order_data=order_data,
+            pdf_filename=pdf_filename,
+            job_timeout=300,
+        )
+
+        return pdf_filename
+
+    except Exception as e:
+        print(f"PDF generation failed for order {order_id}: {e}")
+        from rq import get_current_job
+
+        current_job = get_current_job()
+
+        if current_job:
+            retry_failed_job(current_job.id)
+        raise
 
 
 def send_email_task(order_data: Dict[str, Any], pdf_filename: str) -> bool:
@@ -71,19 +83,31 @@ def send_email_task(order_data: Dict[str, Any], pdf_filename: str) -> bool:
     print(f"PDF attachment: {pdf_filename}")
     print(f"Recipient: {order_data.get('customer_email', 'unknown@example.com')}")
 
-    time.sleep(2)
+    try:
+        time.sleep(2)
 
-    print(
-        f"Email sent successfully to {order_data.get('customer_email', 'unknown@example.com')}"
-    )
+        print(
+            f"Email sent successfully to {order_data.get('customer_email', 'unknown@example.com')}"
+        )
 
-    order_id = order_data.get("order_id")
-    if order_id:
-        update_order_state(order_id, OrderState.EMAIL_SENT)
+        order_id = order_data.get("order_id")
+        if order_id:
+            update_order_state(order_id, OrderState.EMAIL_SENT)
 
-    print(f"🎉 Order {order_data.get('order_id', 'unknown')} processing completed!")
+        print(f"Order {order_data.get('order_id', 'unknown')} processing completed!")
 
-    return True
+        return True
+
+    except Exception as e:
+        print(
+            f"Email sending failed for order {order_data.get('order_id', 'unknown')} : {e}"
+        )
+        from rq import get_current_job
+
+        current_job = get_current_job()
+        if current_job:
+            retry_failed_job(current_job.id)
+        raise
 
 
 # Use this in prod later
