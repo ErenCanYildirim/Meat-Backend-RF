@@ -1,5 +1,6 @@
 from datetime import datetime
-from typing import List, Optional
+from enum import Enum
+from typing import List, Literal, Optional
 from uuid import UUID as PyUUID
 
 from pydantic import BaseModel, ConfigDict
@@ -57,3 +58,18 @@ class OrderSummary(BaseModel):
 
 class OrderStateUpdate(BaseModel):
     state: OrderState
+
+
+class FailureType(str, Enum):
+    ALL = "all"
+    PDF = "pdf"
+    EMAIL = "email"
+
+
+class FailureOrdersRequest(BaseModel):
+    failure_type: FailureType = FailureType.ALL
+    skip: int = 0
+    limit: int = 100
+
+    class Config:
+        use_enum_values = True

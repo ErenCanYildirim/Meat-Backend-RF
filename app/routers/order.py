@@ -13,7 +13,8 @@ from app.config.redis_config import get_pdf_queue, move_to_dead_letter_queue
 from app.crud import order as order_crud
 from app.middleware.prometheus_middleware import record_order_created
 from app.models.order import OrderState
-from app.schemas.order import OrderCreate, OrderResponse, OrderStateUpdate
+from app.schemas.order import (FailureType, OrderCreate, OrderResponse,
+                               OrderStateUpdate)
 from app.services.tasks import generate_pdf_task
 
 router = APIRouter(prefix="/orders", tags=["Orders"])
@@ -361,3 +362,43 @@ async def update_order_state(
         "state": updated_order.state,
         "message": f"Order state updated to {updated_order.state}",
     }
+
+
+@router.get(
+    "/failed",
+    response_model=List[OrderResponse],
+    dependencies=[Depends(require_admin())],
+)
+def get_failed_orders(
+    failure_type: FailureType = Query(
+        FailureType.ALL,
+        description="Type of failure to filter by: 'all', 'pdf', or 'email'",
+    ),
+    skip: int = Query(0, ge=0, description="Number of orders to skip"),
+    limit: int = Query(
+        100, ge=1, le=100, description="Maximum number of orders to return"
+    ),
+    db: Session = Depends(get_db),
+):
+    try:
+        orders = order_crud.get_failed_orders(
+            db=db, failure_type=failure_type.value, skip=skip, limit=limit
+        )
+        return orders
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error retrieving failed orders: {str(e)}",
+        )
+
+
+@router.get("/failed/stats", dependencies=[Depends(require_admin())])
+def get_failed_orders_stats(db: Session = Depends(get_db)):
+    try:
+        stats = order_crud.get_failed_orders_count(db=db)
+        return stats
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error retrieving failed orders statistics: {str(e)}",
+        )

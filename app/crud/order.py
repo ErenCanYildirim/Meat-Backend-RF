@@ -2,11 +2,12 @@ from datetime import date, datetime
 from typing import Any, Dict, List, Optional
 
 from fastapi import HTTPException, status
-from sqlalchemy import and_, func
+from sqlalchemy import and_, func, or_
 from sqlalchemy.orm import Session, joinedload
 
 from app.models.order import Order, OrderItem, OrderState
-from app.schemas.order import OrderCreate, OrderUpdate
+from app.schemas.order import (FailureOrdersRequest, FailureType, OrderCreate,
+                               OrderUpdate)
 
 
 def get_all_orders(db: Session, skip: int = 0, limit: int = 50) -> List[Order]:
@@ -98,3 +99,43 @@ def update_order_state(
     db.refresh(db_order)
 
     return get_order_by_id(db, order_id)
+
+
+def get_failed_orders(
+    db: Session, failure_type: str = "all", skip: int = 0, limit: int = 100
+) -> List[Order]:
+    query = db.query(Order)
+
+    if failure_type.lower() == "pdf":
+        query = query.filter(Order.state == OrderState.PDF_FAILED)
+    elif failure_type.lower() == "email":
+        query = query.filter(Order.state == OrderState.EMAIL_FAILED)
+    elif failure_type.lower() == "all":
+        query = query.filter(
+            or_(
+                Order.state == OrderState.PDF_FAILED,
+                Order.state == OrderState.EMAIL_FAILED,
+            )
+        )
+    else:
+        return []
+
+    orders = query.order_by(Order.order_date.desc()).offset(skip).limit(limit).all()
+
+    return orders if orders is not None else []
+
+
+def get_failed_orders_count(db: Session) -> Dict[str, int]:
+    pdf_failed_count = (
+        db.query(Order).filter(Order.state == OrderState.PDF_FAILED).count()
+    )
+    email_failed_count = (
+        db.query(Order).filter(Order.state == OrderState.EMAIL_FAILED).count()
+    )
+    total_failed_count = pdf_failed_count + email_failed_count
+
+    return {
+        "total_failed": total_failed_count,
+        "pdf_failed": pdf_failed_count,
+        "email_failed": email_failed_count,
+    }
