@@ -1,7 +1,7 @@
 import os
 
 import redis
-from rq import Queue
+from rq import Queue, Worker
 from rq.job import Job
 
 redis_url = os.getenv("REDIS_URL", "redis://localhost:6379")
@@ -73,3 +73,22 @@ def retry_failed_job(job_id: str, max_retries: int = 3) -> bool:
     except Exception as e:
         print(f"Error retrying job: {job_id}: {e}")
         return False
+
+
+def get_queue_stats():
+    return {
+        "pdf_queue_length": len(pdf_queue),
+        "email_queue_length": len(email_queue),
+        "dead_letter_queue": len(dead_letter_queue),
+        "pdf_queue_failed": pdf_queue.failed_job_registry.count,
+        "email_queue_failed": email_queue.failed_job_registry.count,
+    }
+
+
+def get_worker_stats():
+    workers = Worker.all(connection=redis_conn)
+    return {
+        "total_workers": len(workers),
+        "active_workers": len([w for w in workers if w.get_state() == "busy"]),
+        "idle_workers": len([w for w in workers if w.get_state() == "idle"]),
+    }
