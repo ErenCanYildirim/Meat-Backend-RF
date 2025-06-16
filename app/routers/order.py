@@ -2,12 +2,14 @@ from datetime import date, datetime
 from typing import List
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
+from rq import Queue, Retry, Worker
+from rq.job import Job
 from sqlalchemy.orm import Session
 
 from app.auth.core import get_current_user
 from app.auth.dependencies import require_admin
 from app.config.database import get_db
-from app.config.redis_config import get_pdf_queue
+from app.config.redis_config import get_pdf_queue, move_to_dead_letter_queue
 from app.crud import order as order_crud
 from app.middleware.prometheus_middleware import record_order_created
 from app.models.order import OrderState
@@ -283,7 +285,12 @@ async def place_order(
 
         pdf_queue = get_pdf_queue()
         pdf_job = pdf_queue.enqueue(
-            generate_pdf_task, order_data=order_data, job_timeout=600
+            generate_pdf_task,
+            order_data=order_data,
+            job_timeout=600,
+            retry=Retry(max=3, interval=[60, 120, 240]),
+            failure_ttl=3600,
+            on_failure=move_to_dead_letter_queue,
         )
 
         print(f"PDF generation task queued with job ID: {pdf_job.id}")

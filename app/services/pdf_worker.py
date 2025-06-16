@@ -5,8 +5,7 @@ from rq import Worker
 from rq.job import Job
 
 from app.config.logging_config import get_logger, setup_logging
-from app.config.redis_config import (get_pdf_queue, get_redis_connection,
-                                     retry_failed_job)
+from app.config.redis_config import get_pdf_queue, get_redis_connection
 
 environment = os.getenv("ENVIRONMENT", "development")
 setup_logging(environment)

@@ -16,6 +16,8 @@ class OrderState(str, Enum):
     ORDER_PLACED = "order_placed"
     INVOICE_GENERATED = "invoice_generated"
     EMAIL_SENT = "email_sent"
+    PDF_FAILED = "pdf_failed"
+    EMAIL_FAILED = "email_failed"
 
 
 class Order(Base):

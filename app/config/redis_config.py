@@ -1,7 +1,7 @@
 import os
 
 import redis
-from rq import Queue, Worker
+from rq import Queue, Retry, Worker
 from rq.job import Job
 
 redis_url = os.getenv("REDIS_URL", "redis://localhost:6379")
@@ -28,51 +28,23 @@ def get_dead_letter_queue():
     return dead_letter_queue
 
 
-def retry_failed_job(job_id: str, max_retries: int = 3) -> bool:
+def move_to_dead_letter_queue(job, exc_string):
     try:
-        redis_conn = get_redis_connection()
-        job = Job.fetch(job_id, connection=redis_conn)
-
-        retry_count = job.meta.get("retry_count", 0)
-
-        if retry_count >= max_retries:
-            dlq = get_dead_letter_queue()
-            dlq.enqueue(
-                "dead_letter_handler",
-                job_data={
-                    "original_func": job.func_name,
-                    "args": job.args,
-                    "kwargs": job.kwargs,
-                    "failure_reason": str(job.exc_info),
-                    "retry_count": retry_count,
-                },
-                job_timeout=60,
-            )
-            return False
-
-        job.meta["retry_count"] = retry_count + 1
-        job.save_meta()
-
-        delay = 2**retry_count * 60
-
-        if "pdf" in job.func_name:
-            queue = get_pdf_queue()
-        else:
-            queue = get_email_queue()
-
-        queue.enqueue_in(
-            delay,
-            job.func,
-            *job.args,
-            **job.kwargs,
-            job_timeout=job.timeout,
-            job_id=f"{job_id}_retry_{retry_count+1}",
+        dlq = get_dead_letter_queue()
+        dlq.enqueue(
+            "dead_letter_handler",
+            job_data={
+                "original_func": job.func_name,
+                "args": job.args,
+                "kwargs": job.kwargs,
+                "failure_reason": exc_string,
+                "original_job_id": job.id,
+            },
+            timeout=60,
         )
-
-        return True
+        print(f"Job {job.id} moved to dead letter queue after max retries.")
     except Exception as e:
-        print(f"Error retrying job: {job_id}: {e}")
-        return False
+        print(f"Error moving job to dead letter queue: {e}")
 
 
 def get_queue_stats():

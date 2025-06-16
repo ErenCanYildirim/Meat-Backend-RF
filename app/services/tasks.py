@@ -2,10 +2,11 @@ import time
 from enum import Enum
 from typing import Any, Dict
 
+from rq import Queue, Retry, Worker
 from sqlalchemy.orm import Session
 
 from app.config.database import get_db
-from app.config.redis_config import get_email_queue, retry_failed_job
+from app.config.redis_config import get_email_queue, move_to_dead_letter_queue
 from app.middleware.prometheus_middleware import (record_email_sent,
                                                   record_pdf_processing_time)
 from app.models.order import Order, OrderState
@@ -63,18 +64,17 @@ def generate_pdf_task(order_data: Dict[str, Any]) -> str:
             order_data=order_data,
             pdf_filename=pdf_filename,
             job_timeout=300,
+            retry=Retry(max=3, interval=[60, 120, 240]),
+            failure_ttl=3600,
+            on_failure=move_to_dead_letter_queue,
         )
 
         return pdf_filename
 
     except Exception as e:
         print(f"PDF generation failed for order {order_id}: {e}")
-        from rq import get_current_job
-
-        current_job = get_current_job()
-
-        if current_job:
-            retry_failed_job(current_job.id)
+        if order_id and order_id != "unknown":
+            update_order_state(order_id, OrderState.PDF_FAILED)
         raise
 
 
@@ -100,13 +100,13 @@ def send_email_task(order_data: Dict[str, Any], pdf_filename: str) -> bool:
 
     except Exception as e:
         print(
-            f"Email sending failed for order {order_data.get('order_id', 'unknown')} : {e}"
+            f"Email sending failed for order {order_data.get('order_id', 'unknown')}: {e}"
         )
-        from rq import get_current_job
 
-        current_job = get_current_job()
-        if current_job:
-            retry_failed_job(current_job.id)
+        order_id = order_data.get("order_id")
+        if order_id:
+            update_order_state(order_id, OrderState.EMAIL_FAILED)
+
         raise
 
 
