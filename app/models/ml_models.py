@@ -22,7 +22,7 @@ class Forecast(Base):
 
 class ModelMetadata(Base):
     __tablename__ = "model_metadata"
-    
+
     id = Column(Integer, primary_key=True, index=True)
     model_name = Column(String, nullable=False)
     product_category = Column(String, nullable=False)

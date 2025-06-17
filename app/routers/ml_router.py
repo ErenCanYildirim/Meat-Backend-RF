@@ -1,13 +1,13 @@
 from typing import Dict, List
 
 from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy.orm import Session
 from sqlalchemy import desc, func
+from sqlalchemy.orm import Session
 
 from app.auth.dependencies import require_admin
 from app.config.database import get_db
+from app.models.ml_models import Forecast, ModelMetadata, TrendAnalysis
 from app.models.product import ProductCategory
-from app.models.ml_models import ModelMetadata, Forecast, TrendAnalysis
 from app.schemas.ml_schemas import (ForecastResponse, ModelStatusResponse,
                                     TrendResponse)
 from app.services.ml_forecasting_service import MLForecastingService

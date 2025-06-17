@@ -6,8 +6,8 @@ from typing import Dict, List, Optional, Tuple
 import joblib
 import numpy as np
 import pandas as pd
-from sqlalchemy.orm import Session
 from sqlalchemy import desc, func
+from sqlalchemy.orm import Session
 
 warnings.filterwarnings("ignore")
 
@@ -19,7 +19,7 @@ from statsmodels.tsa.statespace.sarimax import SARIMAX
 
 from app.models.ml_models import Forecast, ModelMetadata, TrendAnalysis
 from app.models.order import Order, OrderItem
-from app.models.product import ProductCategory, Product
+from app.models.product import Product, ProductCategory
 
 
 class MLForecastingService:
