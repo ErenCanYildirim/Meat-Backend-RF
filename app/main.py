@@ -21,6 +21,7 @@ from app.models.user import Role, User
 from app.routers import admin as admin_router
 from app.routers import analytics as analytics_router
 from app.routers import auth as auth_router
+from app.routers import ml_router as ml_router
 from app.routers import order as order_router
 from app.routers import product as product_router
 from app.routers import user as user_router
@@ -87,6 +88,7 @@ app.include_router(product_router.router)
 app.include_router(order_router.router)
 app.include_router(admin_router.router)
 app.include_router(analytics_router.router)
+app.include_router(ml_router.router)
 
 app.add_middleware(
     CORSMiddleware,
