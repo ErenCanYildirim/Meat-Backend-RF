@@ -1,3 +1,4 @@
+from datetime import date
 from typing import List
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
@@ -127,3 +128,33 @@ async def get_order_time_distribution(db: Session = Depends(get_db)):
         OrderTimeDistributionOut(date=date, order_count=order_count)
         for date, order_count in result
     ]
+
+
+@router.get(
+    "/total_quantity_per_user",
+    response_model=int,
+    dependencies=[Depends(require_admin())],
+)
+def get_total_quantity_per_user(user_email: str, db: Session = Depends(get_db)):
+    total_quantity = analytics_crud.get_total_quantity_by_user(db, user_email)
+    return total_quantity
+
+
+@router.get(
+    "/total_quantity_by_product_id",
+    response_model=int,
+    dependencies=[Depends(require_admin())],
+)
+def get_total_quantity_by_product_id(product_id: str, db: Session = Depends(get_db)):
+    total_quantity = analytics_crud.get_total_quantity_for_product(db, product_id)
+    return total_quantity
+
+
+@router.get(
+    "/total_quantity_by_date",
+    response_model=int,
+    dependencies=[Depends(require_admin())],
+)
+def get_total_quantity_by_date(order_date: date, db: Session = Depends(get_db)):
+    total_quantity = analytics_crud.get_total_quantity_by_date(db, order_date)
+    return total_quantity
