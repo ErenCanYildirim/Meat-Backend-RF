@@ -8,8 +8,13 @@ from app.auth.dependencies import require_admin
 from app.config.database import get_db
 from app.models.ml_models import Forecast, ModelMetadata, TrendAnalysis
 from app.models.product import ProductCategory
-from app.schemas.ml_schemas import (ForecastResponse, ModelStatusResponse,
+from app.schemas.ml_schemas import (CustomerClusterResponse, CustomerFeatures,
+                                    ForecastResponse, ModelStatusResponse,
                                     TrendResponse)
+from app.services.ml_clustering_service import (analyze_clusters,
+                                                create_visualization,
+                                                extract_customer_features,
+                                                perform_clustering)
 from app.services.ml_forecasting_service import MLForecastingService
 
 router = APIRouter(prefix="/machine_learning", tags=["machine_learning"])
@@ -107,3 +112,84 @@ def get_model_status(db: Session = Depends(get_db)):
         return ModelStatusResponse(models=latest_models)
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Status check failed: {str(e)}")
+
+
+@router.get(
+    "/customer-clusters/summary",
+    dependencies=[Depends(require_admin())],
+)
+async def get_cluster_summary(db: Session = Depends(get_db), days_back: int = 365):
+    df = extract_customer_features(db, days_back)
+    clusters, _, _, _ = perform_clustering(df)
+    cluster_analysis = analyze_clusters(df, clusters)
+
+    summary = {}
+    for cluster_name, data in cluster_analysis.items():
+        summary[cluster_name] = {
+            "type": data["cluster_type"],
+            "size": data["size"],
+            "percentage": round(data["percentage"], 1),
+            "description": data["description"],
+        }
+
+    return summary
+
+
+@router.get(
+    "/customer-clusters",
+    response_model=CustomerClusterResponse,
+    dependencies=[Depends(require_admin())],
+)
+async def analyze_customer_clusters(
+    db: Session = Depends(get_db), days_back: int = 365, n_clusters: int = 4
+):
+    """
+    -> customer segmentation based on purchasing behavior
+    -> identification of high-value custom.
+    -> at risk customer detection
+    -> category preference analysis
+    """
+
+    try:
+        df = extract_customer_features(db, days_back)
+
+        if len(df) < n_clusters:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Not enough customers ({len(df)}) for {n_clusters} clusters",
+            )
+
+        clusters, scaler, kmeans, X_scaled = perform_clustering(df, n_clusters)
+
+        cluster_analysis = analyze_clusters(df, clusters)
+
+        visualization_b64 = create_visualization(df, clusters)
+
+        df["cluster"] = clusters
+        customer_segments = []
+        for _, row in df.iterrows():
+            customer_segments.append(
+                {
+                    "email": row["user_email"],
+                    "cluster_id": int(row["cluster"]),
+                    "cluster_type": cluster_analysis[f'cluster_{row["cluster"]}'][
+                        "cluster_type"
+                    ],
+                    "total_orders": int(row["total_orders"]),
+                    "total_quantity": int(row["total_quantity"]),
+                    "favorite_category": row["favorite_category"],
+                    "days_since_last_order": int(row["days_since_last_order"]),
+                    "order_frequency": round(row["order_frequency"], 2),
+                }
+            )
+
+        return CustomerClusterResponse(
+            cluster_insights=cluster_analysis,
+            customer_segments=customer_segments,
+            visualization_base64=visualization_b64,
+        )
+
+    except Exception as e:
+        raise HTTPException(
+            status_code=500, detail=f"Clustering analysis failed: {str(e)}"
+        )

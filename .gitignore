@@ -2,6 +2,8 @@
 scripts/
 logs/
 
+/remove_pywin_req.bat
+
 # Python
 __pycache__/
 *.py[cod]
