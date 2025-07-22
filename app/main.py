@@ -26,6 +26,9 @@ from app.routers import order as order_router
 from app.routers import product as product_router
 from app.routers import user as user_router
 
+from app.config.db_faker import populate_dummy_data
+
+
 environment = os.getenv("ENVIRONMENT", "development")
 setup_logging(environment)
 logger = get_logger(__name__)
@@ -47,6 +50,7 @@ async def lifespan(app: FastAPI):
         # print("Products initialized")
     except Exception as e:
         print(f"Failed to initialize products!")
+    #populate_dummy_data() #for testing purposes
     yield
     print("Application shutdown complete!")
 
@@ -81,6 +85,19 @@ async def health_check():
 async def get_metrics():
     return Response(generate_latest(), media_type=CONTENT_TYPE_LATEST)
 
+@app.get("/endpoints", tags=["Debug"])
+async def list_all_endpoints():
+    openapi = app.openapi()
+    endpoints = []
+    for path, methods in openapi["paths"].items():
+        for method, details in methods.items():
+            endpoints.append({
+                "path": path,
+                "method": method.upper(),
+                "operationId": details.get("operationId", ""),
+                "summary": details.get("summary", ""),
+            })
+    return JSONResponse(content=endpoints)
 
 app.include_router(user_router.router)
 app.include_router(auth_router.router)

@@ -165,7 +165,7 @@ def init_database():
             db.close()
 
         print("Database initialization completed successfully!")
-
+      
     except Exception as e:
         print(f"Database initialization failed: {e}")
         raise
